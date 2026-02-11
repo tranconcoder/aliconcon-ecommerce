@@ -243,7 +243,7 @@ export default new (class LocationService {
     /* ---------------------------------------------------------- */
     async deleteLocation(locationId: string) {
         try {
-            const deletedLocation = await deleteLocationById(locationId);
+            const deletedLocation = await deleteLocationById({ id: locationId });
             return !!deletedLocation;
         } catch (error) {
             console.warn('⚠️ [LOCATION SERVICE] Failed to delete location:', locationId, error);

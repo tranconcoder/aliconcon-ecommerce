@@ -42,6 +42,9 @@ app.use(express.urlencoded({ extended: true }));
 /* ------------------------------------------------------ */
 /*                      Middlewares                       */
 /* ------------------------------------------------------ */
+//Compression
+app.use(compression())
+
 // Morgan
 app.use(morgan('dev'));
 
@@ -62,8 +65,6 @@ app.use(
         exposedHeaders: ['Content-Disposition']
     })
 );
-
-// app.use(compression());
 
 
 /* ------------------------------------------------------ */

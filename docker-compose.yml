@@ -1,0 +1,97 @@
+services:
+  server:
+    build:
+      context: ./server
+    container_name: aliconcon-ecommerce-server
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    env_file:
+      - ./.env.docker
+    environment:
+      - MCP_SERVER_PORT=8081
+      - MCP_CLIENT_PORT=8080
+
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+
+      # MongoDB
+      - MONGODB_URL=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DB_NAME}?authSource=admin
+
+      # OpenRouteService
+      - OPEN_ROUTE_SERVICE_API_KEY=${OPEN_ROUTE_SERVICE_API_KEY}
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - aliconcon-network
+
+  client-mcp:
+    build:
+      context: ./client-mcp
+    container_name: aliconcon-ecommerce-client-mcp
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./client-mcp:/app
+      - /app/node_modules
+    environment:
+      - PORT=8080
+      - WEBSOCKET_PORT=8080 # Client serves WS on this port? Or connects to server? 
+      # Based on client-mcp/index.ts: WEBSOCKET_PORT = 8001 (default) for its own server. 
+      # Let's align ports.
+      - MCP_URL=http://server-mcp:8081
+      - USE_WSS=false
+    networks:
+      - aliconcon-network
+
+  server-mcp:
+    build:
+      context: ./server-mcp
+    container_name: aliconcon-ecommerce-server-mcp
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./server-mcp:/app
+      - /app/node_modules
+    environment:
+      - MCP_PORT=8081
+    networks:
+      - aliconcon-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: aliconcon-ecommerce-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_DB_NAME}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - aliconcon-network
+
+  redis:
+    image: redis:alpine
+    container_name: aliconcon-ecommerce-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD} --port ${REDIS_PORT}
+    ports:
+      - "${REDIS_PORT}:6379" # not change config
+    volumes:
+      - redis_data:/data
+    networks:
+      - aliconcon-network
+
+networks:
+  aliconcon-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  redis_data:

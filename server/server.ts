@@ -2,11 +2,6 @@
 import './src/api/helpers/loadEnv.helper';
 import jsonfile from 'jsonfile';
 
-import https from 'https';
-import http from 'http';
-import fs from 'fs/promises';
-import child_process from 'child_process';
-
 // Configs
 import { HOST, PORT, BASE_URL, NODE_ENV } from './src/configs/server.config.js';
 
@@ -35,21 +30,9 @@ import SocketIOService from '@/services/socketio.service.js';
 //     }
 // });
 
-const server = https
-    .createServer(
-        {
-            key: await fs.readFile(path.join(import.meta.dirname, './src/api/assets/ssl/key.pem')),
-            cert: await fs.readFile(path.join(import.meta.dirname, './src/api/assets/ssl/key.cert'))
-        },
-        app
-    )
-    .listen(Number(PORT), async () => {
-        console.log(`Server is running at ${BASE_URL}`);
-    });
-
-// const server = app.listen(Number(PORT), () => {
-//     console.log(`Server is running at ${BASE_URL}`);
-// });
+const server = app.listen(Number(PORT), () => {
+    console.log(`Server is running at ${BASE_URL}`);
+});
 
 /* ---------------------------------------------------------- */
 /*                       Socket.IO Setup                     */

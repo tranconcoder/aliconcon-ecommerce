@@ -1,18 +1,14 @@
-FROM node:18-alpine
+FROM oven/bun:1
 
 WORKDIR /app
 
-# Copy package files
 COPY package.json ./
+COPY bun.lock ./
 
-# Install dependencies
-RUN npm install
+RUN bun install
 
-# Copy source code
 COPY . .
 
-# Expose port
 EXPOSE 8080
 
-# Start the MCP client
-CMD ["npm", "start"]
+CMD ["bun", "run", "dev"]

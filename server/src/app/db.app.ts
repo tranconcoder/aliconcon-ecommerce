@@ -1,3 +1,4 @@
+import { MONGO_URL, MONGO_MIN_POOL_SIZE, MONGO_MAX_POOL_SIZE } from '@/configs/mongo.config.js';
 // Libs
 import mongoose, { MongooseError } from 'mongoose';
 
@@ -5,7 +6,7 @@ import mongoose, { MongooseError } from 'mongoose';
 import LoggerService from '@/services/logger.service.js';
 
 // Configs
-import { DB_URL, DB_MIN_POOL_SIZE, DB_MAX_POOL_SIZE, NODE_ENV } from '@/configs/server.config.js';
+import { NODE_ENV } from '@/configs/server.config.js';
 
 export default class MongoDB {
     private static instance: MongoDB;
@@ -33,9 +34,9 @@ export default class MongoDB {
     }
 
     public connect = async () => {
-        await mongoose.connect(DB_URL, {
-            minPoolSize: DB_MIN_POOL_SIZE,
-            maxPoolSize: DB_MAX_POOL_SIZE
+        await mongoose.connect(MONGO_URL, {
+            minPoolSize: MONGO_MIN_POOL_SIZE,
+            maxPoolSize: MONGO_MAX_POOL_SIZE
         });
     };
 
