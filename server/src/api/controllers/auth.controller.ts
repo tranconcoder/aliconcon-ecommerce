@@ -4,7 +4,7 @@ import type { RequestHandler } from 'express';
 import AuthService from '@/services/auth.service.js';
 import { CreatedResponse, OkResponse } from '@/response/success.response.js';
 import { ForbiddenErrorResponse } from '@/response/error.response.js';
-import { getEnv, EnvKey } from '@/helpers/env.helper';
+import { CLIENT_URL } from '@/configs/auth.config.js';
 
 export default class AuthController {
     /* ------------------------------------------------------ */
@@ -79,14 +79,16 @@ export default class AuthController {
     public static loginWithGoogleCallback: RequestHandler = async (req, res, next) => {
         try {
             if (!req.user) throw new ForbiddenErrorResponse({ message: 'Login failed!' });
-            
+
             const { token, user } = await AuthService.createSession(req.user);
 
             // Redirect to client with token
-            const clientUrl = getEnv(EnvKey.CLIENT_URL, false, 'http://localhost:3000');
-            res.redirect(
-                `${clientUrl}/auth/google/callback?accessToken=${token.accessToken}&refreshToken=${token.refreshToken}&userId=${user._id}`
-            );
+            const redirectUrl = `${CLIENT_URL}/auth/google/callback`
+                + `?accessToken=${token.accessToken}`
+                + `&refreshToken=${token.refreshToken}`
+                + `&userId=${user._id}`;
+
+            res.redirect(redirectUrl);
         } catch (error) {
             next(error);
         }
