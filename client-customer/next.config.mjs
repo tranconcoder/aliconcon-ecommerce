@@ -7,7 +7,15 @@ const nextConfig = {
         ignoreBuildErrors: true
     },
     images: {
-        unoptimized: true
+        unoptimized: true,
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'lh3.googleusercontent.com',
+                port: '',
+                pathname: '/**',
+            },
+        ],
     },
     // Custom server configuration for HTTPS in production
     async headers() {

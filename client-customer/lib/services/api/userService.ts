@@ -1,4 +1,4 @@
-import apiClient from '../axiosInstance';
+import apiClient from '../axios.service';
 
 // Types and interfaces for user-related API operations
 export interface UserProfile {

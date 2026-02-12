@@ -1,4 +1,4 @@
-import apiClient from '../axiosInstance';
+import apiClient from '../axios.service';
 
 // Define the structure of a single cart item (as needed by the component)
 export interface CartItem {

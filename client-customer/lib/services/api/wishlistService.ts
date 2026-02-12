@@ -1,4 +1,4 @@
-import apiClient from '../axiosInstance'; // Assuming a configured axios instance
+import apiClient from '../axios.service'; // Assuming a configured axios instance
 
 // Define a more accurate SPU type based on the provided API response
 export interface SPU {

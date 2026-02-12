@@ -1,4 +1,4 @@
-import api from '../axiosInstance';
+import api from '../axios.service';
 import { API_ENDPOINTS } from './apiConfig';
 
 export interface ProductAttribute {

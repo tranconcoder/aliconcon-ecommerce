@@ -1,5 +1,5 @@
-import apiClient from '../axiosInstance'; // apiClient is our axiosInstance
-import { BACKEND_API_URL } from '../server.config'; // For potential direct image URLs if not using mediaService
+import apiClient from '../axios.service'; // apiClient is our axiosInstance
+import { BACKEND_API_URL } from '../../configs/server.config'; // For potential direct image URLs if not using mediaService
 import { Category } from './categoryService';
 
 // Define a type for the product data if you have one, e.g.:

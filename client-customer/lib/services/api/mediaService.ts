@@ -1,4 +1,4 @@
-import { BACKEND_API_URL } from '../server.config'; // Import the new config
+import { BACKEND_API_URL } from '../../configs/server.config'; // Import the new config
 
 // Get the base URL for the backend. Prefers environment variable, falls back to localhost.
 // const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -12,12 +12,16 @@ import { BACKEND_API_URL } from '../server.config'; // Import the new config
  */
 export const getMediaUrl = (mediaId: string): string => {
   if (!mediaId) {
-    // Return a placeholder or default image URL if mediaId is missing
-    // For now, let's return an empty string, but you might want to handle this more gracefully.
     console.warn("getMediaUrl called with empty mediaId");
-    return "/placeholder.svg"; // Or some other default placeholder
+    return "/placeholder.svg";
   }
-  return `${BACKEND_API_URL}/media/${mediaId}`; // Use BACKEND_API_URL
+
+  // If mediaId is already a full URL (like Google avatar URL), return it as is
+  if (mediaId.startsWith('http://') || mediaId.startsWith('https://')) {
+    return mediaId;
+  }
+
+  return `${BACKEND_API_URL}/media/${mediaId}`;
 };
 
 export const mediaService = {

@@ -1,4 +1,4 @@
-import apiClient from '../axiosInstance';
+import apiClient from '../axios.service';
 
 // It's good practice to define types/interfaces for your API payloads and responses.
 // Example (you should adjust these to match your actual API):
@@ -29,7 +29,7 @@ export interface AuthResponse {
       user_role: string;
       user_sex: boolean;
       user_status: string;
-      // ...other user properties
+      user_dayOfBirth: string; // Added to match User type
     };
     token: {
       accessToken: string;

@@ -1,4 +1,4 @@
-import apiClient from '../axiosInstance';
+import apiClient from '../axios.service';
 
 export interface ChatUser {
     id: string;

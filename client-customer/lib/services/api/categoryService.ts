@@ -1,4 +1,4 @@
-import axiosInstance from "../axiosInstance";
+import axiosInstance from "../axios.service";
 
 export interface Category {
   _id: string;

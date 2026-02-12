@@ -3,12 +3,8 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev --turbo --experimental-https",
+        "dev": "next dev --turbo",
         "build": "next build",
-        "start": "NODE_ENV=production bun server.js",
-        "start:https": "NODE_ENV=production bun server.js",
-        "start:dev": "next dev --experimental-https",
-        "generate-certs": "bash generate-certificates.sh",
         "lint": "next lint"
     },
     "dependencies": {

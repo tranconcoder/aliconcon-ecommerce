@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import passport from 'passport';
 
 /* --------------------- Controllers -------------------- */
 import AuthController from '@/controllers/auth.controller.js';
@@ -42,6 +43,25 @@ authRoute.post(
 authRoute.post('/login', validateLogin, catchError(AuthController.login));
 
 authRoute.post('/new-token', validateNewToken, catchError(AuthController.newToken));
+
+/* ------------------------------------------------------ */
+/*                      Google Auth                       */
+/* ------------------------------------------------------ */
+authRoute.get('/google', passport.authenticate('google', { 
+    scope: [
+        'profile', 
+        'email', 
+        'https://www.googleapis.com/auth/user.birthday.read', 
+        'https://www.googleapis.com/auth/user.gender.read',
+        'https://www.googleapis.com/auth/user.phonenumbers.read'
+    ] 
+}));
+
+authRoute.get(
+    '/google/callback',
+    passport.authenticate('google', { session: false }),
+    AuthController.loginWithGoogleCallback
+);
 
 /* ------------------------------------------------------ */
 /*                    Validate routes                     */

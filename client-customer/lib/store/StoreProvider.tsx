@@ -9,11 +9,9 @@ import {
     logout,
     User,
     Shop,
-    LoginSuccessPayload
 } from './slices/userSlice';
-import axiosClient from '@/lib/services/axiosInstance'; // Assuming you have this configured
+import axiosClient from '@/lib/services/axios.service'; // Assuming you have this configured
 import { fetchCart } from './slices/cartSlice';
-import { useAppSelector } from './hooks';
 
 interface StoreProviderProps {
     children: React.ReactNode;

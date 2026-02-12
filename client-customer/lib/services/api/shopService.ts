@@ -1,4 +1,4 @@
-import apiClient from '../axiosInstance';
+import apiClient from '../axios.service';
 
 export interface ShopLocation {
   _id?: string; // Added _id as it's in the response

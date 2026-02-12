@@ -26,6 +26,7 @@ import shopModel from '@/models/shop.model.js';
 import { getRoleIdByName } from '@/models/repository/rbac/index.js';
 import { findOneAndUpdateUser, findOneUser, findUserById } from '@/models/repository/user/index.js';
 import { RoleNames } from '@/enums/rbac.enum.js';
+import { UserStatus } from '@/enums/user.enum.js';
 import { deleteKeyToken } from './redis.service.js';
 import { findOneAndUpdateKeyToken } from '@/models/repository/keyToken/index.js';
 import { USER_PUBLIC_FIELDS } from '@/configs/user.config.js';
@@ -379,5 +380,95 @@ export default class AuthService {
         if (!newKeyToken) throw new ForbiddenErrorResponse({ message: 'Save key token failed!' });
 
         return newJwtTokenPair;
+    };
+    /* ------------------------------------------------------ */
+    /*                  Upsert user from Google               */
+    /* ------------------------------------------------------ */
+    public static upsertUserFromGoogle = async (profile: any) => {
+        const email = profile.emails?.[0]?.value;
+        const name = profile.displayName;
+        const picture = profile.photos?.[0]?.value;
+
+        // Extended info from profile._json (requires specific scopes)
+        const gender = profile._json?.gender; // 'male', 'female', 'other'
+        const birthday = profile._json?.birthday; // Often in People API format or similar
+
+        if (!email) throw new BadRequestErrorResponse({ message: 'Email not found from Google profile!' });
+
+        // Check if user exists by email
+        let user = await findOneUser({
+            query: { user_email: email },
+            options: { lean: true }
+        });
+
+        if (user) return user;
+
+        // Create new user
+        const password = Math.random().toString(36).slice(-8); // Random password
+        const hashPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUND);
+        
+        // Generate random 10 digit phone number (placeholder)
+        const phoneNumber = '0' + Math.floor(100000000 + Math.random() * 900000000).toString();
+
+        // Map Google gender to our boolean user_sex (true => male, false => female)
+        let user_sex = false;
+        if (gender === 'male') user_sex = true;
+
+        // Parse birthday if available
+        let user_dayOfBirth: Date | undefined = undefined;
+        if (birthday) {
+            // Google birthday format can vary, often it's "YYYY/MM/DD" or similar in _json
+            // If using People API it might be complex object. 
+            // We'll try to parse it safely.
+            const parsedDate = new Date(birthday);
+            if (!isNaN(parsedDate.getTime())) {
+                user_dayOfBirth = parsedDate;
+            }
+        }
+
+        const newUser = UserService.newInstance({
+            phoneNumber,
+            password: hashPassword,
+            user_email: email,
+            user_fullName: name,
+            user_avatar: picture,
+            user_role: await getRoleIdByName(RoleNames.USER),
+            user_status: UserStatus.ACTIVE,
+            user_sex,
+            user_dayOfBirth
+        });
+
+        const savedUser = await UserService.saveInstance(newUser);
+        
+        return savedUser.toObject();
+    };
+
+    /* ------------------------------------------------------ */
+    /*                     Create Session                     */
+    /* ------------------------------------------------------ */
+    public static createSession = async (user: any) => {
+        const { privateKey, publicKey } = KeyTokenService.generateTokenPair();
+        
+        const jwtTokenPair = await JwtService.signJwtPair({
+            privateKey,
+            payload: {
+                id: user._id.toString(),
+                role: user.user_role.toString()
+            }
+        });
+
+        if (!jwtTokenPair) throw new ForbiddenErrorResponse({ message: 'Generate jwt token failed!' });
+
+        await KeyTokenService.findOneAndReplace({
+            userId: user._id.toString(),
+            privateKey,
+            publicKey,
+            refreshToken: jwtTokenPair.refreshToken
+        });
+
+        return {
+            token: jwtTokenPair,
+            user: _.pick(user, USER_PUBLIC_FIELDS)
+        };
     };
 }

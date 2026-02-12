@@ -1,4 +1,5 @@
 import express from 'express';
+import passport from 'passport';
 
 // Libs
 import morgan from 'morgan';
@@ -15,6 +16,7 @@ import MongoDB from './app/db.app.js';
 
 // Configs
 import { API_VERSION } from './configs/server.config.js';
+import './configs/passport.config.js';
 
 // Routes
 import rootRoute from './api/routes/index.js';
@@ -65,6 +67,9 @@ app.use(
         exposedHeaders: ['Content-Disposition']
     })
 );
+
+// Init passport
+app.use(passport.initialize());
 
 
 /* ------------------------------------------------------ */

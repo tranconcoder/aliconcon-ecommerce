@@ -4,6 +4,7 @@ import type { RequestHandler } from 'express';
 import AuthService from '@/services/auth.service.js';
 import { CreatedResponse, OkResponse } from '@/response/success.response.js';
 import { ForbiddenErrorResponse } from '@/response/error.response.js';
+import { getEnv, EnvKey } from '@/helpers/env.helper';
 
 export default class AuthController {
     /* ------------------------------------------------------ */
@@ -71,5 +72,23 @@ export default class AuthController {
             message: 'Get new token pair success!',
             metadata: await AuthService.newToken(req.body)
         }).send(res);
+    };
+    /* ------------------------------------------------------ */
+    /*                Login with Google Callback              */
+    /* ------------------------------------------------------ */
+    public static loginWithGoogleCallback: RequestHandler = async (req, res, next) => {
+        try {
+            if (!req.user) throw new ForbiddenErrorResponse({ message: 'Login failed!' });
+            
+            const { token, user } = await AuthService.createSession(req.user);
+
+            // Redirect to client with token
+            const clientUrl = getEnv(EnvKey.CLIENT_URL, false, 'http://localhost:3000');
+            res.redirect(
+                `${clientUrl}/auth/google/callback?accessToken=${token.accessToken}&refreshToken=${token.refreshToken}&userId=${user._id}`
+            );
+        } catch (error) {
+            next(error);
+        }
     };
 }
