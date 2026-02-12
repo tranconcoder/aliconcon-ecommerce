@@ -1,4 +1,4 @@
-import { categories } from '@/constants/category.constants.js';
+import { categories } from '@/seeders/category.seeder.js';
 import categoryModel from '@/models/category.model.js';
 import {
     findCategories,

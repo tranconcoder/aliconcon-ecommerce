@@ -21,7 +21,7 @@ export default new (class AddressController {
     getDefaultAddress: RequestHandler = async (req, res, _) => {
         new OkResponse({
             message: 'Get default address success!',
-            metadata: await AddressService.getDefaultAddress(req.userId || '')
+            metadata: await AddressService.getDefaultAddress(req.userId || '') as any
         }).send(res);
     };
 

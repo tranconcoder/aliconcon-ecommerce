@@ -8,7 +8,7 @@ import { NotFoundErrorResponse } from '@/response/error.response.js';
 import { createMediaSchema } from '@/validations/zod/media.zod.js';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
-import { categoryMedia } from '@/constants/media.constants.js';
+import { categoryMedia } from '@/seeders/media.seeder.js';
 
 export default new (class MediaService {
     /* ---------------------------------------------------------- */
