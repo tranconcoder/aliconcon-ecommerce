@@ -55,9 +55,14 @@ function WarehouseManager() {
                     timer: prev.timer - 1
                 }));
             }, 1000);
+        } else if (deleteConfirm.timer === 0) {
+            setDeleteConfirm((prev) => ({
+                ...prev,
+                timerActive: false
+            }));
         }
         return () => clearInterval(interval);
-    }, [deleteConfirm.timerActive]);
+    }, [deleteConfirm.timerActive, deleteConfirm.timer]);
 
     const handleAddWarehouse = async (newWarehouse) => {
         try {

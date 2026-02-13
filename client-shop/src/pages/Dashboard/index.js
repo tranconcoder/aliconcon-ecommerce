@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
@@ -47,15 +47,7 @@ function Dashboard() {
 
     console.log({ shopInfo: shop, currentUser: user });
 
-    useEffect(() => {
-        if (shop?.shop_status === 'active') {
-            fetchAnalytics();
-        } else {
-            setLoading(false);
-        }
-    }, [timeRange, shop?.shop_status]);
-
-    const fetchAnalytics = async () => {
+    const fetchAnalytics = useCallback(async () => {
         try {
             setLoading(true);
             const response = await analyticsService.getShopDashboardStats(timeRange);
@@ -78,7 +70,15 @@ function Dashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [timeRange, showToast]);
+
+    useEffect(() => {
+        if (shop?.shop_status === 'active') {
+            fetchAnalytics();
+        } else {
+            setLoading(false);
+        }
+    }, [shop?.shop_status, fetchAnalytics]);
 
     // Get logo URL using the media utility
     const logoUrl = getMediaUrl(shop?.shop_logo);

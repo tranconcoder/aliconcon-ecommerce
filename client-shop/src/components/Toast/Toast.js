@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Toast.module.scss';
 
@@ -8,6 +8,13 @@ const Toast = ({ id, message, type = 'success', duration = 3000, onClose }) => {
     const [show, setShow] = useState(false);
     const [exit, setExit] = useState(false);
 
+    const handleClose = useCallback(() => {
+        setExit(true);
+        setTimeout(() => {
+            onClose(id);
+        }, 300); // Match animation duration
+    }, [id, onClose]);
+
     useEffect(() => {
         setShow(true);
         const timer = setTimeout(() => {
@@ -15,14 +22,7 @@ const Toast = ({ id, message, type = 'success', duration = 3000, onClose }) => {
         }, duration);
 
         return () => clearTimeout(timer);
-    }, [duration]);
-
-    const handleClose = () => {
-        setExit(true);
-        setTimeout(() => {
-            onClose(id);
-        }, 300); // Match animation duration
-    };
+    }, [duration, handleClose]);
 
     const getIcon = () => {
         switch (type) {

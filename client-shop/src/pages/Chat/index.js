@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames/bind';
 import styles from './Chat.module.scss';
@@ -65,7 +65,7 @@ function Chat() {
     const messagesLoading = useSelector(selectMessagesLoading(activeConversationId));
     const searchResults = useSelector(selectSearchResults);
     const searchLoading = useSelector(selectSearchLoading);
-    const searchQuery = useSelector(selectSearchQuery);
+    useSelector(selectSearchQuery);
     const isConnected = useSelector(selectIsConnected);
     const connectionError = useSelector(selectConnectionError);
     const typingUsers = useSelector(selectTypingUsers(activeConversationId));
@@ -222,7 +222,7 @@ function Chat() {
 
     const handleUserClick = async (user) => {
         try {
-            const result = await dispatch(startConversation({ targetUserId: user.id })).unwrap();
+            await dispatch(startConversation({ targetUserId: user.id })).unwrap();
             setShowSearch(false);
             dispatch(clearSearchResults());
             setSearchInput('');

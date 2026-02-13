@@ -115,15 +115,7 @@ function AddWarehouseModal({ isOpen, onClose, onAddWarehouse }) {
         }
     };
 
-    const handleCoordinatesChange = (coordinates) => {
-        setWarehouseAddress((prev) => ({
-            ...prev,
-            coordinates: {
-                lat: coordinates.lat,
-                lng: coordinates.lng
-            }
-        }));
-    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();

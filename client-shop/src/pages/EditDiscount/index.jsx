@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from '../DiscountManager/DiscountManager.module.scss';
@@ -35,11 +35,7 @@ function EditDiscount() {
         is_available: true
     });
 
-    useEffect(() => {
-        fetchDiscountData();
-    }, [id]);
-
-    const fetchDiscountData = async () => {
+    const fetchDiscountData = useCallback(async () => {
         try {
             setInitialLoading(true);
             const response = await axiosClient.get(`${API_URL}/discount/edit/${id}`);
@@ -70,7 +66,11 @@ function EditDiscount() {
         } finally {
             setInitialLoading(false);
         }
-    };
+    }, [id, showToast, navigate]);
+
+    useEffect(() => {
+        fetchDiscountData();
+    }, [fetchDiscountData]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;

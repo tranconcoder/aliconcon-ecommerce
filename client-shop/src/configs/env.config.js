@@ -2,32 +2,45 @@
  * Environment configuration for the application
  */
 
-// Determine the appropriate API URL based on environment - HTTPS ONLY
-const getApiUrl = () => {
-    // Check for explicit environment variable first
-    if (process.env.REACT_APP_API_URL) {
-        return process.env.REACT_APP_API_URL;
-    }
-
-    // Always use HTTPS for security and WebSocket compatibility
-    return 'https://localhost:4000';
+export const EnvKey = {
+    API_URL: 'REACT_APP_API_URL',
+    NODE_ENV: 'NODE_ENV'
 };
 
-// API URL configuration - HTTPS ONLY for security
-export const API_URL = getApiUrl();
+/**
+ * Get environment variable by key
+ * @param {string} key 
+ * @returns {string}
+ */
+export const getEnvKey = (key, isRequired = false, defaultValue = null) => {
+    if (isRequired && !process.env[key]) {
+        throw new Error(`CRITICAL: ${key} is not defined in the environment!`);
+    }
 
-// HTTPS URL (no HTTP fallback for security)
-export const API_URL_HTTPS = 'https://localhost:4000';
+    return process.env[key] || defaultValue;
+};
 
-// Other environment variables can be added here
-export const NODE_ENV = process.env.NODE_ENV || 'development';
+// Standardized constants
+export const NODE_ENV = getEnvKey(EnvKey.NODE_ENV, false, 'development');
 
+// Mandatory API URL check (Required in production)
+export const API_URL = getEnvKey(
+    EnvKey.API_URL, 
+    NODE_ENV === 'production', 
+    NODE_ENV === 'development' ? 'http://localhost:4000' : null
+);
+
+if (!API_URL && NODE_ENV === 'development') {
+    console.warn('⚠️ REACT_APP_API_URL is missing. Using default development URL.');
+}
+
+// Backward compatibility or secondary exports
+export const API_URL_HTTPS = API_URL; 
 export const DISCOUNT_ITEM_PER_PAGE = 30;
 
 // Debug logging
-console.log('Environment Config:', {
+console.log('Environment Config Initialized:', {
     NODE_ENV,
     API_URL,
-    isHTTPS: API_URL.startsWith('https'),
-    isSecure: true // Always secure with HTTPS only
+    isSecure: API_URL.startsWith('https')
 });

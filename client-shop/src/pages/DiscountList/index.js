@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './DiscountList.module.scss';
@@ -53,37 +53,12 @@ const DiscountList = function () {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortField, setSortField] = useState('created_at');
     const [sortOrder, setSortOrder] = useState('desc');
-    const [searchTimeout, setSearchTimeout] = useState(null);
+    const searchTimeoutRef = useRef(null);
 
     // Filter state
     const [statusFilter, setStatusFilter] = useState('all');
 
-    // Effect for pagination, sorting and filtering
-    useEffect(() => {
-        fetchDiscounts();
-    }, [currentPage, itemsPerPage, sortField, sortOrder, statusFilter]);
-
-    // Debounced search effect
-    useEffect(() => {
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-
-        const timeoutId = setTimeout(() => {
-            setCurrentPage(1); // Reset to first page when searching
-            fetchDiscounts();
-        }, 500);
-
-        setSearchTimeout(timeoutId);
-
-        return () => {
-            if (searchTimeout) {
-                clearTimeout(searchTimeout);
-            }
-        };
-    }, [searchTerm]);
-
-    const fetchDiscounts = async () => {
+    const fetchDiscounts = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -132,7 +107,32 @@ const DiscountList = function () {
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, itemsPerPage, sortField, sortOrder, searchTerm, statusFilter, showToast]);
+
+    // Effect for pagination, sorting and filtering
+    useEffect(() => {
+        fetchDiscounts();
+    }, [fetchDiscounts]);
+
+    // Debounced search effect
+    useEffect(() => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        const timeoutId = setTimeout(() => {
+            setCurrentPage(1); // Reset to first page when searching
+            fetchDiscounts();
+        }, 500);
+
+        searchTimeoutRef.current = timeoutId;
+
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [searchTerm, fetchDiscounts]);
 
     const getDiscountStatus = (discount) => {
         const now = new Date();

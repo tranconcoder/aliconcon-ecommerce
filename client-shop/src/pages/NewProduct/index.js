@@ -90,7 +90,7 @@ function NewProduct() {
         } else if (name.startsWith('attr_')) {
             // Handle attribute updates coming from the ProductAttributes component
             // This assumes attributes are being added with a name like attr_key or attr_value
-            const [prefix, index, field] = name.split('_');
+            const [, index, field] = name.split('_');
 
             setFormData((prev) => {
                 const updatedAttributes = [...(prev.product_attributes || [])];
@@ -312,7 +312,7 @@ function NewProduct() {
 
                         <ProductAttributes
                             formData={formData}
-                            handleAttributeChange={handleInputChange}
+                            handleAttributeChange={handleAttributeChange}
                         />
 
                         <SKUManagement formData={formData} setFormData={setFormData} />

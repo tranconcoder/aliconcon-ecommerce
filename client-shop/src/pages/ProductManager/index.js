@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ProductManager.module.scss';
@@ -24,24 +24,7 @@ function ProductManager() {
         timerActive: false
     });
 
-    useEffect(() => {
-        fetchProducts();
-    }, []);
-
-    useEffect(() => {
-        let interval;
-        if (deleteConfirm.timerActive && deleteConfirm.timer > 0) {
-            interval = setInterval(() => {
-                setDeleteConfirm((prev) => ({
-                    ...prev,
-                    timer: prev.timer - 1
-                }));
-            }, 1000);
-        }
-        return () => clearInterval(interval);
-    }, [deleteConfirm.timerActive]);
-
-    const fetchProducts = async () => {
+    const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
             const response = await axiosClient.get('/spu/shop/own');
@@ -54,7 +37,29 @@ function ProductManager() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showToast]);
+
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
+
+    useEffect(() => {
+        let interval;
+        if (deleteConfirm.timerActive && deleteConfirm.timer > 0) {
+            interval = setInterval(() => {
+                setDeleteConfirm((prev) => ({
+                    ...prev,
+                    timer: prev.timer - 1
+                }));
+            }, 1000);
+        } else if (deleteConfirm.timer === 0) {
+            setDeleteConfirm((prev) => ({
+                ...prev,
+                timerActive: false
+            }));
+        }
+        return () => clearInterval(interval);
+    }, [deleteConfirm.timerActive, deleteConfirm.timer]);
 
     const openDeleteConfirm = (product) => {
         setDeleteConfirm({

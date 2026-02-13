@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectShopInfo } from '../../../../store/slices/shopSlice';
 import { fetchWarehouses } from '../../../../store/slices/warehouseSlice';
@@ -111,7 +111,7 @@ function SKUManagement({ formData, setFormData }) {
                 sku_list: []
             }));
         }
-    }, [hasValidVariations]);
+    }, [hasValidVariations, formData.sku_list.length, setFormData]);
 
     // Check if a variation combination already exists
     const checkDuplicateVariation = (skuIndex, selectedOptions) => {
@@ -338,13 +338,11 @@ function SKUManagement({ formData, setFormData }) {
 
     // Validate warehouses
     useEffect(() => {
-        let isValid = true;
         const newErrors = {};
 
         formData.sku_list.forEach((sku, index) => {
             if (!sku.warehouse) {
                 newErrors[index] = 'Vui lòng chọn kho hàng';
-                isValid = false;
             }
         });
 

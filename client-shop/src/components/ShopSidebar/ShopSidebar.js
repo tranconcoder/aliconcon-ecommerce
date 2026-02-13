@@ -13,7 +13,6 @@ import {
     MdShoppingCart,
     MdPeople,
     MdOutlineSettings,
-    MdStore,
     MdChevronLeft,
     MdChevronRight,
     MdDiscount,

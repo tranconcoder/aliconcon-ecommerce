@@ -134,15 +134,7 @@ function EditWarehouseModal({ isOpen, onClose, onEditWarehouse, warehouse }) {
         }
     };
 
-    const handleCoordinatesChange = (coordinates) => {
-        setWarehouseAddress((prev) => ({
-            ...prev,
-            coordinates: {
-                lat: coordinates.lat,
-                lng: coordinates.lng
-            }
-        }));
-    };
+
 
     const handleKeepCurrentLocation = () => {
         setWarehouseAddress({

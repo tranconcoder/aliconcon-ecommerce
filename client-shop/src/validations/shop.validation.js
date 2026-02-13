@@ -1,10 +1,5 @@
 import * as Yup from 'yup';
-import { ShopType } from '../constants/shop.enum';
-
-const SUPPORTED_IMAGE_FORMATS = ['image/jpg', 'image/jpeg', 'image/png'];
-const SUPPORTED_DOCUMENT_FORMATS = [...SUPPORTED_IMAGE_FORMATS, 'application/pdf'];
-const phoneRegExp = /^[0-9]{10}$/;
-
+ 
 export const registerShopSchema = Yup.object().shape({
     // Shop Information
     shop_name: Yup.string()

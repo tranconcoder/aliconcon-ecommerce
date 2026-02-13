@@ -72,10 +72,7 @@ function MarkdownEditor({
                             fontFamily: 'inherit'
                         }
                     }}
-                    // Add additional props to prevent shortcuts errors
-                    data-color-mode="light"
                     hideToolbar={false}
-                    preview={preview}
                 />
             </div>
 

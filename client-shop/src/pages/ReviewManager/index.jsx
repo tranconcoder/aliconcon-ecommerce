@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ReviewManager.module.scss';
 import axiosClient from '../../configs/axios';
 import { useToast } from '../../contexts/ToastContext';
 import { formatDateTime } from '../../utils/format';
 import { getMediaUrl } from '../../utils/media';
-import { FaStar, FaAngleLeft, FaAngleRight, FaEye, FaFilter } from 'react-icons/fa';
+import { FaStar, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 
 const cx = classNames.bind(styles);
 
@@ -38,11 +38,7 @@ function ReviewManager() {
     // Modal state for image preview
     const [previewImage, setPreviewImage] = useState(null);
 
-    useEffect(() => {
-        fetchReviews();
-    }, [filters]);
-
-    const fetchReviews = async () => {
+    const fetchReviews = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -79,7 +75,11 @@ function ReviewManager() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters, showToast]);
+
+    useEffect(() => {
+        fetchReviews();
+    }, [fetchReviews]);
 
     const handleFilterChange = (field, value) => {
         setFilters((prev) => ({

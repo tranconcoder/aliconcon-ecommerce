@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './ProductEdit.module.scss';
@@ -71,12 +71,7 @@ const ProductEditPage = () => {
         productImages: []
     });
 
-    useEffect(() => {
-        fetchProductData();
-        fetchCategories();
-    }, [id]);
-
-    const fetchProductData = async () => {
+    const fetchProductData = useCallback(async () => {
         try {
             setLoading(true);
             const response = await axiosClient.get(`/spu/${id}`);
@@ -118,16 +113,21 @@ const ProductEditPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, showToast]);
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
             const response = await axiosClient.get('/category');
             setCategories(response.data.metadata || []);
         } catch (error) {
             console.error('Error fetching categories:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchProductData();
+        fetchCategories();
+    }, [fetchProductData, fetchCategories]);
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({
@@ -232,21 +232,7 @@ const ProductEditPage = () => {
         }));
     };
 
-    // Function to handle SKU image removal and update sku_images_map
-    const handleSKUImageRemoval = (skuIndex) => {
-        // Reset the image count for this SKU since user removed some images
-        // The new count will be determined by uploaded files
-        const currentNewImages = skuFiles.imagesToAdd[skuIndex]?.length || 0;
 
-        setFormData((prev) => {
-            const newSkuImagesMap = [...prev.sku_images_map];
-            newSkuImagesMap[skuIndex] = currentNewImages;
-            return {
-                ...prev,
-                sku_images_map: newSkuImagesMap
-            };
-        });
-    };
 
     const handleFileUpload = (type, files, skuIndex = null) => {
         if (type === 'product_thumb') {

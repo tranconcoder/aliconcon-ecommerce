@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './DiscountDetail.module.scss';
@@ -17,11 +17,7 @@ function DiscountDetail() {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
-    useEffect(() => {
-        fetchDiscountDetail();
-    }, [id]);
-
-    const fetchDiscountDetail = async () => {
+    const fetchDiscountDetail = useCallback(async () => {
         try {
             setLoading(true);
             const response = await axiosClient.get(`${API_URL}/discount/edit/${id}`);
@@ -38,7 +34,11 @@ function DiscountDetail() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, showToast, navigate]);
+
+    useEffect(() => {
+        fetchDiscountDetail();
+    }, [fetchDiscountDetail]);
 
     const handleTogglePublish = async () => {
         try {

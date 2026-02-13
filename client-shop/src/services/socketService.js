@@ -15,7 +15,7 @@ import {
 // AGGRESSIVE WebSocket blocking at module level
 if (typeof window !== 'undefined') {
     // Block WebSocket constructor completely
-    const originalWebSocket = window.WebSocket;
+
     window.WebSocket = function (...args) {
         console.warn('🛡️ WebSocket blocked to prevent crashes - using polling instead');
         throw new Error('WebSocket disabled for stability - using polling transport');
@@ -34,7 +34,7 @@ class SocketService {
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
         this.isConnecting = false;
-        // HTTPS ONLY for security - no HTTP fallback
+        // Primary connection URLs
         this.connectionUrls = [API_URL, API_URL_HTTPS];
         this.currentUrlIndex = 0;
         this.hasTriedPollingOnly = false;
@@ -134,7 +134,7 @@ class SocketService {
 
     async attemptConnection(token) {
         const serverUrl = this.connectionUrls[this.currentUrlIndex];
-        console.log(`🔗 Attempting HTTPS connection to: ${serverUrl}`);
+        console.log(`🔗 Attempting connection to: ${serverUrl}`);
 
         try {
             // Clean up any existing socket
@@ -312,12 +312,12 @@ class SocketService {
                 return;
             }
 
-            // All HTTPS URLs failed - try ultra-safe HTTPS polling mode
+            // All connection attempts failed - try ultra-safe polling mode
             if (
                 this.currentUrlIndex >= this.connectionUrls.length - 1 &&
                 !this.hasTriedPollingOnly
             ) {
-                console.log('🛡️ Trying ultra-safe HTTPS polling-only fallback...');
+                console.log('🛡️ Trying ultra-safe polling-only fallback...');
                 this.hasTriedPollingOnly = true;
                 this.currentUrlIndex = 0;
                 await this.attemptUltraSafeConnection(token);
@@ -335,8 +335,8 @@ class SocketService {
     }
 
     async attemptUltraSafeConnection(token) {
-        const serverUrl = this.connectionUrls[0]; // Use primary HTTPS URL
-        console.log(`🛡️ Attempting ULTRA-SAFE HTTPS polling connection to: ${serverUrl}`);
+        const serverUrl = this.connectionUrls[0]; // Use primary URL
+        console.log(`🛡️ Attempting ULTRA-SAFE polling connection to: ${serverUrl}`);
 
         try {
             this.safeDisconnect();

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import classNames from 'classnames/bind';
 import styles from './OrderManager.module.scss';
 import OrderDetails from './components/OrderDetails';
@@ -22,12 +21,7 @@ function OrderManager() {
     const [orderToReject, setOrderToReject] = useState(null);
     const { showToast } = useToast();
 
-    useEffect(() => {
-        console.log('OrderManager mounted');
-        fetchOrders();
-    }, []);
-
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         try {
             setLoading(true);
             console.log('Attempting to fetch orders...');
@@ -56,7 +50,12 @@ function OrderManager() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter, searchTerm, showToast]);
+
+    useEffect(() => {
+        console.log('OrderManager mounted');
+        fetchOrders();
+    }, [fetchOrders]);
 
     // Refetch orders when filter or search changes
     useEffect(() => {
@@ -65,7 +64,7 @@ function OrderManager() {
         }, 500); // Debounce search
 
         return () => clearTimeout(timeoutId);
-    }, [filter, searchTerm]);
+    }, [fetchOrders]);
 
     // Format date to a more readable format
     const formatDate = (dateString) => {

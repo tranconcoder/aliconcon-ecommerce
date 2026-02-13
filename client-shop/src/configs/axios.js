@@ -13,6 +13,8 @@ const axiosClient = axios.create({
 
 // Authentication token storage
 let accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+// refreshToken is managed via localStorage directly in the interceptor
+// eslint-disable-next-line no-unused-vars
 let refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 
 // Flag to prevent multiple refresh token requests

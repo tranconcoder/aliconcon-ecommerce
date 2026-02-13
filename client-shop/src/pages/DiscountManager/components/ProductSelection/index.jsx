@@ -3,7 +3,7 @@ import classNames from 'classnames/bind';
 import styles from './ProductSelection.module.scss';
 import axiosClient from '../../../../configs/axios';
 import { API_URL } from '../../../../configs/env.config';
-import { useSelector } from 'react-redux';
+
 
 const cx = classNames.bind(styles);
 
@@ -13,7 +13,7 @@ const ProductSelection = ({ selectedSpus, onChange }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectAll, setSelectAll] = useState(true);
     const [showProductList, setShowProductList] = useState(false);
-    const shop = useSelector((state) => state.user.shopInfo);
+
 
     useEffect(() => {
         // Mặc định chọn tất cả và không hiển thị danh sách
