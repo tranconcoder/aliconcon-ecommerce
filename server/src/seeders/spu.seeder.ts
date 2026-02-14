@@ -100,12 +100,18 @@ class SPUSeeder extends Seeder {
             const mainMedia = mediaMap.get(p.image);
             const categoryId = new mongoose.Types.ObjectId(baseCategoryId + p.categorySuffix);
 
+            // Process description media links
+            let productDescription = p.desc;
+            mediaMap.forEach((media, fileName) => {
+                productDescription = productDescription.split(`media://${fileName}`).join(`media://${media._id}`);
+            });
+
             // Step 4: Construct the SPU document
             const spuData = {
                 _id: p._id,
                 product_name: p.name,
                 product_thumb: mainMedia._id,
-                product_description: p.desc,
+                product_description: productDescription,
                 product_price: p.price,
                 product_category: categoryId,
                 product_shop: this.shop._id,

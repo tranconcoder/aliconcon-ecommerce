@@ -73,9 +73,20 @@
     line-height: 1.7;
 }
 
+
 .paragraph:last-child {
     margin-bottom: 0;
 }
+
+/* Images */
+.image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    display: block;
+}
+
 
 /* Lists */
 .unorderedList,

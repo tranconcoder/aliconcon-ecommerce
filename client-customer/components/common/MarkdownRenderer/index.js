@@ -59,6 +59,19 @@ const MarkdownRenderer = ({ content, className = '' }) => {
         tr: ({ children }) => <tr className={styles.tableRow}>{children}</tr>,
         th: ({ children }) => <th className={styles.tableHeader}>{children}</th>,
         td: ({ children }) => <td className={styles.tableCell}>{children}</td>,
+        img: ({ src, alt }) => {
+            if (src && src.startsWith('media://')) {
+                const mediaId = src.replace('media://', '');
+                return (
+                    <img 
+                        src={`http://localhost:4000/media/${mediaId}`} 
+                        alt={alt} 
+                        className={styles.image} 
+                    />
+                );
+            }
+            return <img src={src} alt={alt} className={styles.image} />;
+        },
     };
 
     return (
