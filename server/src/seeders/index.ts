@@ -8,6 +8,7 @@ import './data/rbac.data.js';
 import './data/category.data.js';
 import './data/user.data.js';
 import './data/shop.data.js';
+import './data/warehouse.data.js';
 import './data/spu.data.js';
 import './data/sku.data.js';
 
@@ -24,6 +25,7 @@ import { locationSeeder } from './location.seeder.js';
 import { categorySeeder } from './category.seeder.js';
 import { userSeeder } from './user.seeder.js';
 import { shopSeeder } from './shop.seeder.js';
+import { warehouseSeeder } from './warehouse.seeder.js';
 import { spuSeeder } from './spu.seeder.js';
 import { skuSeeder } from './sku.seeder.js';
 
@@ -43,6 +45,7 @@ export const seederMap: Record<string, Seeder> = {
     location: locationSeeder,
     user: userSeeder,
     shop: shopSeeder,
+    warehouse: warehouseSeeder,
     spu: spuSeeder,
     sku: skuSeeder,
 };
@@ -57,6 +60,7 @@ export const seederOrder: Seeder[] = [
     locationSeeder,
     userSeeder,
     shopSeeder,
+    warehouseSeeder,
     spuSeeder,
     skuSeeder,
 ];

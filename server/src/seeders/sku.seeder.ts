@@ -6,6 +6,8 @@
 import skuModel from '@/models/sku.model.js';
 import { spuModel } from '@/models/spu.model.js';
 import mediaModel from '@/models/media.model.js';
+import inventoryModel from '@/models/inventory.model.js';
+import warehouseModel from '@/models/warehouse.model.js';
 import { seederDataManager } from './data/index.js';
 import type { ISKUData } from './data/sku.data.js';
 import { Seeder } from './seeder.js';
@@ -28,14 +30,35 @@ const cartesian = (...args: any[][]): any[][] => {
  * Common logic to create or update an SKU record.
  */
 const createOrUpdateSKU = async (spuId: any, tierIdx: number[], data: any) => {
+    let sku;
     const existingSku = await skuModel.findOne({
         sku_product: spuId,
         sku_tier_idx: tierIdx
     });
     if (!existingSku) {
-        await skuModel.create(data);
+        sku = await skuModel.create(data);
     } else {
         await skuModel.updateOne({ _id: existingSku._id }, data);
+        sku = await skuModel.findById(existingSku._id);
+    }
+
+    if (sku) {
+        // Create matching inventory record
+        const spu = await spuModel.findById(spuId);
+        const warehouse = await warehouseModel.findOne({ shop: spu?.product_shop });
+
+        if (warehouse) {
+            await inventoryModel.findOneAndUpdate(
+                { inventory_sku: sku._id, inventory_shop: spu?.product_shop },
+                {
+                    inventory_sku: sku._id,
+                    inventory_shop: spu?.product_shop,
+                    inventory_warehouses: warehouse._id,
+                    inventory_stock: data.sku_stock
+                },
+                { upsert: true, new: true }
+            );
+        }
     }
 };
 
