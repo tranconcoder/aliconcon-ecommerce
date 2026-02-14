@@ -323,10 +323,48 @@ export default new (class SKUService {
                 }
             },
             {
-                $unwind: '$sku'
+                $addFields: {
+                    // Filter SKUs within the array to match SKU-level conditions
+                    sku: {
+                        $filter: {
+                            input: '$sku',
+                            as: 's',
+                            cond: {
+                                $and: [
+                                    { $eq: ['$$s.is_deleted', false] },
+                                    // Price filter
+                                    ...(minPrice !== undefined ? [{ $gte: ['$$s.sku_price', Number(minPrice)] }] : []),
+                                    ...(maxPrice !== undefined ? [{ $lte: ['$$s.sku_price', Number(maxPrice)] }] : []),
+                                    // Stock filter
+                                    ...(inStock ? [{ $gt: ['$$s.sku_stock', 0] }] : [])
+                                ]
+                            }
+                        }
+                    }
+                }
             },
             {
-                $match: skuMatchConditions
+                // Ensure at least one SKU matches
+                $match: {
+                    sku: { $not: { $size: 0 } }
+                }
+            },
+            {
+                $addFields: {
+                    // Pick the best SKU (representative). 
+                    // Since sales data is at SPU level, we pick the one with lowest price as representative.
+                    sku: {
+                        $arrayElemAt: [
+                            {
+                                $sortArray: {
+                                    input: '$sku',
+                                    sortBy: { sku_price: 1 }
+                                }
+                            },
+                            0
+                        ]
+                    }
+                }
             },
 
             /* ---------------- Only get category active ---------------- */
@@ -352,25 +390,25 @@ export default new (class SKUService {
                 $addFields: {
                     'sku.sku_value': {
                         $map: {
-                            input: '$sku.sku_tier_idx',
-                            as: 'tierIdx',
+                            input: { $range: [0, { $size: '$sku.sku_tier_idx' }] },
+                            as: 'idx',
                             in: {
-                                $let: {
-                                    vars: {
-                                        variation: {
-                                            $arrayElemAt: [
-                                                '$product_variations',
-                                                { $indexOfArray: ['$sku.sku_tier_idx', '$$tierIdx'] }
-                                            ]
-                                        },
-                                        valueIndex: '$$tierIdx'
-                                    },
-                                    in: {
-                                        key: '$$variation.variation_name',
-                                        value: {
-                                            $arrayElemAt: ['$$variation.variation_values', '$$valueIndex']
-                                        }
+                                key: {
+                                    $getField: {
+                                        field: 'variation_name',
+                                        input: { $arrayElemAt: ['$product_variations', '$$idx'] }
                                     }
+                                },
+                                value: {
+                                    $arrayElemAt: [
+                                        {
+                                            $getField: {
+                                                field: 'variation_values',
+                                                input: { $arrayElemAt: ['$product_variations', '$$idx'] }
+                                            }
+                                        },
+                                        { $arrayElemAt: ['$sku.sku_tier_idx', '$$idx'] }
+                                    ]
                                 }
                             }
                         }

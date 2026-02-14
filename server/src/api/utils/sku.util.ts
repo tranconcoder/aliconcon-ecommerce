@@ -28,7 +28,6 @@ export const getAllSKUAggregate = (limit: number, page: number) => [
         }
     },
 
-    /* ---------------- Only get sku not deleted ---------------- */
     {
         $lookup: {
             from: SKU_COLLECTION_NAME,
@@ -38,11 +37,29 @@ export const getAllSKUAggregate = (limit: number, page: number) => [
         }
     },
     {
-        $unwind: '$sku'
+        $addFields: {
+            sku: {
+                $arrayElemAt: [
+                    {
+                        $sortArray: {
+                            input: {
+                                $filter: {
+                                    input: '$sku',
+                                    as: 's',
+                                    cond: { $eq: ['$$s.is_deleted', false] }
+                                }
+                            },
+                            sortBy: { sku_price: 1 }
+                        }
+                    },
+                    0
+                ]
+            }
+        }
     },
     {
         $match: {
-            'sku.is_deleted': false
+            sku: { $exists: true, $ne: null }
         }
     },
 
@@ -126,11 +143,29 @@ export const getAllSKUAggregateSort = (limit: number, page: number, sort: string
         }
     },
     {
-        $unwind: '$sku'
+        $addFields: {
+            sku: {
+                $arrayElemAt: [
+                    {
+                        $sortArray: {
+                            input: {
+                                $filter: {
+                                    input: '$sku',
+                                    as: 's',
+                                    cond: { $eq: ['$$s.is_deleted', false] }
+                                }
+                            },
+                            sortBy: { sku_price: 1 }
+                        }
+                    },
+                    0
+                ]
+            }
+        }
     },
     {
         $match: {
-            'sku.is_deleted': false
+            sku: { $exists: true, $ne: null }
         }
     },
     {
