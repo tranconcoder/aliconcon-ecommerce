@@ -20,13 +20,21 @@ import {
     IpnUnknownError,
     IpnSuccess
 } from 'vnpay';
+import {
+    VNPAY_TMN_CODE,
+    VNPAY_HASH_SECRET,
+    VNPAY_URL,
+    VNPAY_RETURN_URL,
+    VNPAY_IPN_URL,
+    VNPAY_API_URL
+} from '@/configs/payment.config.js';
 
 export default new (class PaymentService {
     private static vnpay = new VNPay({
-        tmnCode: 'FNAX6Q4P',
-        secureSecret: 'ZVXPMEMXF4K5UU246CAA3DNO2DCV6QSR',
-        vnpayHost: 'https://sandbox.vnpayment.vn',
-        queryDrAndRefundHost: 'https://sandbox.vnpayment.vn', // tùy chọn, trường hợp khi url của querydr và refund khác với url khởi tạo thanh toán (thường sẽ sử dụng cho production)
+        tmnCode: VNPAY_TMN_CODE,
+        secureSecret: VNPAY_HASH_SECRET,
+        vnpayHost: VNPAY_URL,
+        queryDrAndRefundHost: VNPAY_API_URL,
 
         testMode: true, // tùy chọn, ghi đè vnpayHost thành sandbox nếu là true
         hashAlgorithm: 'SHA512' as any, // tùy chọn - fix type issue
@@ -58,15 +66,6 @@ export default new (class PaymentService {
             getBankListEndpoint: 'qrpayauth/api/merchant/get_bank_list',
         }, // tùy chọn
     });
-
-    private readonly vnpayConfig = {
-        tmnCode: 'FNAX6Q4P',
-        hashSecret: 'ZVXPMEMXF4K5UU246CAA3DNO2DCV6QSR',
-        url: 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
-        returnUrl: 'https://localhost:3000/payment/vnpay-return',
-        ipnUrl: 'https://do-an-1-v2.onrender.com/payment/vnpay-ipn'
-    };
-
 
     private sortParams(obj: any) {
         const sortedObj: any = Object.entries(obj)
@@ -175,7 +174,7 @@ export default new (class PaymentService {
             vnp_TxnRef: txnRef,
             vnp_OrderInfo: orderInfo,
             vnp_OrderType: ProductCode.Other,
-            vnp_ReturnUrl: this.vnpayConfig.returnUrl,
+            vnp_ReturnUrl: VNPAY_RETURN_URL,
             vnp_Locale: VnpLocale.VN,
             vnp_CreateDate: dateFormat(new Date()),
             vnp_ExpireDate: dateFormat(tomorrow),
@@ -213,7 +212,7 @@ export default new (class PaymentService {
         });
 
         // Verify signature using the same method
-        const expectedSignature = this.createVNPaySignature(vnpParams, this.vnpayConfig.hashSecret);
+        const expectedSignature = this.createVNPaySignature(vnpParams, VNPAY_HASH_SECRET);
 
         console.log('🔐 Signature verification:', {
             expected: expectedSignature,
@@ -385,7 +384,7 @@ export default new (class PaymentService {
         } else {
             console.log('❌ Signature verification failed');
             console.log('🔍 Debug signature verification:');
-            console.log('   - Hash secret:', this.vnpayConfig.hashSecret);
+            console.log('   - Hash secret:', VNPAY_HASH_SECRET);
             console.log('   - Params for signing:', { ...vnpParams, vnp_SecureHash: undefined });
             throw new BadRequestErrorResponse({ message: 'Invalid signature' });
         }
@@ -790,11 +789,11 @@ export default new (class PaymentService {
         }
 
         // Check if we're in sandbox/test mode
-        // const isTestMode = this.vnpayConfig.url.includes('sandbox') || process.env.NODE_ENV !== 'production';
+        // const isTestMode = VNPAY_URL.includes('sandbox') || process.env.NODE_ENV !== 'production';
         const isTestMode = false;
         console.log('🔧 Environment check:', {
             isTestMode,
-            vnpayUrl: this.vnpayConfig.url,
+            vnpayUrl: VNPAY_URL,
             nodeEnv: process.env.NODE_ENV
         });
 

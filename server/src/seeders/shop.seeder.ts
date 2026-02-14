@@ -190,7 +190,7 @@ class ShopSeeder extends Seeder {
             { upsert: true, new: true }
         );
 
-        return location._id as mongoose.Types.ObjectId;
+        return new mongoose.Types.ObjectId(location._id);
     }
 }
 
