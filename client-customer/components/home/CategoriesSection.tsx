@@ -54,7 +54,7 @@ export function CategoriesSection() {
             </div>
           )}
           {!isLoadingCategories && !errorCategories && categories.slice(0, 4).map((category) => (
-            <Link key={category._id} href={`/category/${category._id}`} className="group relative h-40 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 p-[10px] shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out">
+            <Link key={category._id} href={`/category/${category._id}`} className="group relative h-40 rounded-xl overflow-hidden bg-white dark:bg-gray-800 p-[10px] shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out">
               <Image
                 src={mediaService.getMediaUrl(category.category_icon)}
                 alt={category.category_name}

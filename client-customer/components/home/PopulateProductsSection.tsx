@@ -127,9 +127,7 @@ export function PopulateProductsSection() {
                                 </div>
                                 <div>
                                     <Link
-                                        href={`/products/${product._id}${
-                                            product.sku ? `?sku=${product.sku._id}` : ''
-                                        }`}
+                                        href={`/products/${product.sku?._id}`}
                                         className="hover:text-blue-600"
                                     >
                                         <h3 className="font-medium text-sm group-hover:text-blue-600 transition-colors truncate">
