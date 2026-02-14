@@ -51,50 +51,11 @@ class RBACData extends SeederDataRow<IRBACRoleData> {
     ];
 
     protected rawData = [
-        // --- Super Admin: full access to ALL resources ---
-        [
-            RoleNames.SUPER_ADMIN,
-            'Super Administrator',
-            RoleStatus.ACTIVE,
-            Object.values(Resources).map((r) => grantAny(r))
-        ],
-
-        // --- Admin: manage shops (read/update/delete) + full category access ---
-        [
-            RoleNames.ADMIN,
-            'Administrator',
-            RoleStatus.ACTIVE,
-            [
-                { resource: Resources.SHOP, actions: [RoleActions.READ_ANY, RoleActions.UPDATE_ANY, RoleActions.DELETE_ANY], attributes: '*' },
-                grantAny(Resources.CATEGORY)
-            ]
-        ],
-
-        // --- Shop: own resources for shop, order, product, warehouses, discount + read analytics ---
-        [
-            RoleNames.SHOP,
-            'Shop',
-            RoleStatus.ACTIVE,
-            [
-                { resource: Resources.SHOP, actions: [RoleActions.CREATE_OWN, RoleActions.READ_ANY, RoleActions.UPDATE_OWN, RoleActions.DELETE_OWN], attributes: '*' },
-                grantOwn(Resources.ORDER),
-                grantOwn(Resources.PRODUCT),
-                grantOwn(Resources.WAREHOUSES),
-                grantOwn(Resources.DISCOUNT),
-                { resource: Resources.SHOP_ANALYTICS, actions: [RoleActions.READ_OWN], attributes: '*' }
-            ]
-        ],
-
-        // --- User: own access to products and orders ---
-        [
-            RoleNames.USER,
-            'User role',
-            RoleStatus.ACTIVE,
-            [
-                grantOwn(Resources.PRODUCT),
-                grantOwn(Resources.ORDER)
-            ]
-        ]
+        // role_name                | role_desc               | role_status      | role_granted
+        [RoleNames.SUPER_ADMIN,      'Super Administrator',   RoleStatus.ACTIVE, Object.values(Resources).map((r) => grantAny(r))],
+        [RoleNames.ADMIN,            'Administrator',         RoleStatus.ACTIVE, [{ resource: Resources.SHOP, actions: [RoleActions.READ_ANY, RoleActions.UPDATE_ANY, RoleActions.DELETE_ANY], attributes: '*' }, grantAny(Resources.CATEGORY)]],
+        [RoleNames.SHOP,             'Shop',                  RoleStatus.ACTIVE, [{ resource: Resources.SHOP, actions: [RoleActions.CREATE_OWN, RoleActions.READ_ANY, RoleActions.UPDATE_OWN, RoleActions.DELETE_OWN], attributes: '*' }, grantOwn(Resources.ORDER), grantOwn(Resources.PRODUCT), grantOwn(Resources.WAREHOUSES), grantOwn(Resources.DISCOUNT), { resource: Resources.SHOP_ANALYTICS, actions: [RoleActions.READ_OWN], attributes: '*' }]],
+        [RoleNames.USER,             'User role',             RoleStatus.ACTIVE, [grantOwn(Resources.PRODUCT), grantOwn(Resources.ORDER)]]
     ];
 
     constructor() {

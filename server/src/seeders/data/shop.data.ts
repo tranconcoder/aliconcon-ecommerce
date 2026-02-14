@@ -41,24 +41,8 @@ class ShopData extends SeederDataRow<IShopData> {
     ];
 
     protected rawData = [
-        [
-            '000000000000000000000001',
-            '000000000000000000000001',
-            'Aliconcon Official Store',
-            'aliconcon-official-store.png',
-            'shop@aliconcon.com',
-            ShopType.COMPANY,
-            'CERT-123456',
-            'Thành phố Hồ Chí Minh',
-            'Quận 1',
-            'Phường Bến Nghé',
-            '123 Đường Lê Lợi',
-            '0987654321',
-            'Official store for Aliconcon products',
-            '123456789',
-            ShopStatus.ACTIVE,
-            true
-        ]
+        // _id                      | shop_userId                | shop_name                  | shop_logo                      | shop_email           | shop_type        | shop_certificate | provinceName           | districtName | wardName         | address            | shop_phone| shop_description                       | cardID      | status            | brand
+        ['000000000000000000000001', '000000000000000000000001', 'Aliconcon Official Store', 'aliconcon-official-store.png', 'shop@aliconcon.com', ShopType.COMPANY, 'CERT-123456',     'Thành phố Hồ Chí Minh', 'Quận 1',      'Phường Bến Nghé', '123 Đường Lê Lợi', '0987654321', 'Official store for Aliconcon products', '123456789', ShopStatus.ACTIVE, true]
     ];
 
     constructor() {
