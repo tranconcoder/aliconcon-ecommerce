@@ -203,10 +203,27 @@ class SKUSeeder extends Seeder {
                     }
                 });
 
-                // Construct final image list for the SKU
-                const skuImages = selectedImageId !== product_thumb
-                    ? [selectedImageId, ...product_images]
-                    : product_images;
+                // Construct final image list for the SKU (always ensure 3 images if possible)
+                // 1. Direct variation shot (the specific color/model)
+                let skuImages = [selectedImageId];
+                
+                // 2. Add lifestyle/contextual images from SPU metadata
+                const contextImages = (spu as any).product_context_images || [];
+                skuImages = [...skuImages, ...contextImages];
+                
+                // 3. Fallback to other SPU images if we still need more to reach 3
+                if (skuImages.length < 3) {
+                    const fallbackImages = product_images.filter((img: any) => 
+                        !skuImages.some(existing => existing.toString() === img.toString())
+                    );
+                    skuImages = [...skuImages, ...fallbackImages];
+                }
+                
+                // 4. Final trim and padding to exactly 3
+                skuImages = skuImages.slice(0, 3);
+                while (skuImages.length < 3 && skuImages.length > 0) {
+                    skuImages.push(skuImages[0]);
+                }
 
                 // Step 4: Upsert the specific SKU generated from the combination
                 await createOrUpdateSKU(spu._id, tierIdx, {

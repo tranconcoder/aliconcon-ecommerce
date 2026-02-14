@@ -75,6 +75,7 @@ class SPUSeeder extends Seeder {
             p.variations.forEach(v => {
                 if (v.images) v.images.forEach(img => allImages.add(img));
             });
+            p.contextImages.forEach(img => allImages.add(img));
 
             // Step 2: Ensure all identified images exist in the media collection
             const mediaMap = new Map<string, any>();
@@ -135,8 +136,10 @@ class SPUSeeder extends Seeder {
                 product_slug: p.slug,
                 is_publish: true,
                 is_draft: false,
-                product_images: [mainMedia._id]
-            };
+                product_images: Array.from(allImages).map(imgName => mediaMap.get(imgName)._id),
+                // Add a way to easily retrieve context images in SKU seeder if needed
+                product_context_images: p.contextImages.map(imgName => mediaMap.get(imgName)._id)
+            } as any;
 
             // Step 5: Upsert the SPU record by ID or slug
             await spuModel.findOneAndUpdate(
