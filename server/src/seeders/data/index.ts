@@ -15,17 +15,28 @@
 export class SeederDataTable<T> {
     constructor(private items: T[]) {}
 
-    /** Returns all items in the table. */
+    /**
+     * @description Returns all items in the table.
+     * @returns {T[]} An array containing all items.
+     */
     public getAll(): T[] {
         return this.items;
     }
 
-    /** Finds a single item based on a predicate. */
+    /**
+     * @description Finds a single item based on a predicate.
+     * @param {function(item: T): boolean} predicate - A function to test each element.
+     * @returns {T | undefined} The first element that satisfies the predicate, or undefined.
+     */
     public findOne(predicate: (item: T) => boolean): T | undefined {
         return this.items.find(predicate);
     }
 
-    /** Filters items based on a predicate. */
+    /**
+     * @description Filters items based on a predicate.
+     * @param {function(item: T): boolean} predicate - A function to test each element.
+     * @returns {T[]} An array containing all elements that satisfy the predicate.
+     */
     public filter(predicate: (item: T) => boolean): T[] {
         return this.items.filter(predicate);
     }
@@ -47,7 +58,8 @@ export abstract class SeederDataRow<T> {
     constructor() {}
 
     /**
-     * Lazily builds and returns the data table.
+     * @description Lazily builds and returns the data table.
+     * @returns {SeederDataTable<T>} The initialized data table instance.
      */
     public getTable(): SeederDataTable<T> {
         if (!this._dataTable) {
@@ -58,8 +70,9 @@ export abstract class SeederDataRow<T> {
     }
 
     /**
-     * Converts raw tuples into typed objects.
+     * @description Converts raw tuples into typed objects.
      * Can be overridden by subclasses for custom transformations.
+     * @returns {T[]} An array of typed objects converted from rawData.
      */
     public getData(): T[] {
         return this.rawData.map((row) => {
@@ -72,8 +85,9 @@ export abstract class SeederDataRow<T> {
     }
 
     /**
-     * Convenience method for retrieving all objects.
+     * @description Convenience method for retrieving all objects.
      * Calls getTable().getAll() which ensures lazy initialization.
+     * @returns {T[]} An array containing all objects.
      */
     public getAll(): T[] {
         return this.getTable().getAll();
@@ -87,12 +101,20 @@ export abstract class SeederDataRow<T> {
 export class SeederDataManager {
     private tables: Map<string, SeederDataRow<any>> = new Map();
 
-    /** Registers a data source instance. */
+    /**
+     * @description Registers a data source instance.
+     * @param {string} key - The unique registration key for the data source.
+     * @param {SeederDataRow<any>} instance - The data row instance to register.
+     */
     public register(key: string, instance: SeederDataRow<any>) {
         this.tables.set(key, instance);
     }
 
-    /** Retrieves a strongly-typed data table by its registration key. */
+    /**
+     * @description Retrieves a strongly-typed data table by its registration key.
+     * @param {string} key - The registration key to look up.
+     * @returns {SeederDataTable<T> | undefined} The found table, or undefined if not found.
+     */
     public table<T>(key: string): SeederDataTable<T> | undefined {
         return this.tables.get(key)?.getTable();
     }

@@ -39,8 +39,9 @@ class SPUSeeder extends Seeder {
     }
 
     /**
+     * @description Loads product templates and identifies an active shop to own them.
      * @override
-     * Loads product templates and identifies an active shop to own them.
+     * @returns {Promise<void>}
      */
     protected async prepare(): Promise<void> {
         this.products = seederDataManager.table<ISPUData>('spus')?.getAll() || [];
@@ -48,8 +49,9 @@ class SPUSeeder extends Seeder {
     }
 
     /**
+     * @description Verifies that the environment is ready for product seeding.
      * @override
-     * Verifies that the environment is ready for product seeding.
+     * @returns {Promise<void>}
      */
     protected async validate(): Promise<void> {
         if (!this.shop) throw new Error('No active shop found — SPU seeder requires at least one active shop');
@@ -57,10 +59,15 @@ class SPUSeeder extends Seeder {
     }
 
     /**
+     * @description Executes the combined media and product seeding process.
      * @override
-     * Executes the combined media and product seeding process.
+     * @returns {Promise<void>}
      */
     protected async seed(): Promise<void> {
+        // Clear existing data to handle predefined ID changes and avoid slug duplicates
+        await spuModel.deleteMany({});
+        console.log('[SPU Seeder] Cleared existing SPU records');
+
         for (const p of this.products) {
             // Step 1: Identify all unique images across main product and its variations
             const allImages = new Set<string>();
@@ -94,6 +101,7 @@ class SPUSeeder extends Seeder {
 
             // Step 4: Construct the SPU document
             const spuData = {
+                _id: p._id,
                 product_name: p.name,
                 product_thumb: mainMedia._id,
                 product_description: p.desc,
@@ -130,9 +138,9 @@ class SPUSeeder extends Seeder {
                 product_images: [mainMedia._id]
             };
 
-            // Step 5: Upsert the SPU record by slug
+            // Step 5: Upsert the SPU record by ID or slug
             await spuModel.findOneAndUpdate(
-                { product_slug: p.slug },
+                { _id: p._id },
                 spuData,
                 { upsert: true, new: true }
             );

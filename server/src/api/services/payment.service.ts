@@ -43,7 +43,7 @@ export default new (class PaymentService {
          * Bật/tắt ghi log
          * Nếu enableLog là false, loggerFn sẽ không được sử dụng trong bất kỳ phương thức nào
          */
-        enableLog: true, // tùy chọn
+        enableLog: false, // tùy chọn
 
         /**
          * Hàm `loggerFn` sẽ được gọi để ghi log khi enableLog là true
@@ -67,6 +67,12 @@ export default new (class PaymentService {
         }, // tùy chọn
     });
 
+    /**
+     * @description Sorts an object's keys alphabetically and filters out empty/null values.
+     * @param {any} obj - The object to sort.
+     * @returns {any} A new object with sorted keys.
+     * @private
+     */
     private sortParams(obj: any) {
         const sortedObj: any = Object.entries(obj)
             .filter(
@@ -81,6 +87,13 @@ export default new (class PaymentService {
         return sortedObj;
     }
 
+    /**
+     * @description Creates a HMAC-SHA512 signature for VNPay requests.
+     * @param {any} params - The parameters to sign.
+     * @param {string} hashSecret - The secret key used for signing.
+     * @returns {string} The hex-encoded signature.
+     * @private
+     */
     private createVNPaySignature(params: any, hashSecret: string): string {
         // Remove secure hash fields if they exist
         const paramsToSign = { ...params };
@@ -109,6 +122,13 @@ export default new (class PaymentService {
     }
 
 
+    /**
+     * @description Formats amount to VNPay standard (rounds to nearest integer).
+     * @param {number} amount - The amount to format.
+     * @returns {number} The formatted amount.
+     * @throws {BadRequestErrorResponse} If amount is invalid.
+     * @private
+     */
     private formatVNPayAmount(amount: number): number {
         // VNPay requires amount in smallest currency unit (VND cents)
         // Convert to integer and ensure no decimal places
@@ -123,6 +143,19 @@ export default new (class PaymentService {
         return vnpAmount;
     }
 
+    /**
+     * @description Generates a VNPay payment URL for a given order.
+     * @param {Object} params - The payment details.
+     * @param {string} params.orderId - The order ID.
+     * @param {number} params.amount - The payment amount.
+     * @param {string} params.orderInfo - Descriptive info for the order.
+     * @param {string} params.ipAddr - Client's IP address.
+     * @param {string} [params.locale='vn'] - Preferred language.
+     * @param {string} [params.bankCode=""] - Optional bank code.
+     * @returns {Promise<{paymentUrl: string, txnRef: string}>} The generated URL and transaction reference.
+     * @throws {NotFoundErrorResponse} If order or payment record not found.
+     * @throws {BadRequestErrorResponse} If order is already paid.
+     */
     public async createVNPayPaymentUrl({
         orderId,
         amount,
@@ -197,6 +230,13 @@ export default new (class PaymentService {
         };
     }
 
+    /**
+     * @description Processes the data returned from VNPay after payment attempt.
+     * @param {any} vnpParams - Parameters received from VNPay redirect.
+     * @returns {Promise<Object>} Result of the payment processing.
+     * @throws {BadRequestErrorResponse} If signature is invalid.
+     * @throws {NotFoundErrorResponse} If payment record is missing.
+     */
     public async handleVNPayReturn(vnpParams: any) {
         let secureHash = vnpParams['vnp_SecureHash'];
 
@@ -390,6 +430,11 @@ export default new (class PaymentService {
         }
     }
 
+    /**
+     * @description Handles Instant Payment Notification (IPN) from VNPay.
+     * @param {any} vnpParams - Raw IPN parameters.
+     * @returns {Promise<any>} Response object for VNPay system.
+     */
     public async handleVNPayIPN(vnpParams: any) {
         try {
             // Xác thực IPN call sử dụng VNPay library
@@ -462,6 +507,12 @@ export default new (class PaymentService {
         }
     }
 
+    /**
+     * @description Retrieves a payment record by its transaction reference.
+     * @param {string} txnRef - The transaction reference (payment ID).
+     * @returns {Promise<any>} The payment document.
+     * @throws {NotFoundErrorResponse} If not found.
+     */
     public async getPaymentByTxnRef(txnRef: string) {
         const payment = await paymentModel.findOne({ txn_ref: txnRef });
         if (!payment) {
@@ -470,6 +521,11 @@ export default new (class PaymentService {
         return payment;
     }
 
+    /**
+     * @description Retrieves list of payments associated with an order ID.
+     * @param {string} orderId - The target order ID.
+     * @returns {Promise<any[]>} Array of payment records (usually 1).
+     */
     public async getPaymentsByOrderId(orderId: string) {
         // Find the order first to get the payment_id
         const order = await orderModel.findById(orderId);
@@ -482,6 +538,12 @@ export default new (class PaymentService {
         return payment ? [payment] : [];
     }
 
+    /**
+     * @description Manually updates a payment status once it's confirmed outside the standard loop.
+     * @param {string} paymentId - The specific payment ID.
+     * @returns {Promise<any>} The updated payment document.
+     * @throws {NotFoundErrorResponse} If record doesn't exist.
+     */
     public async updatePaymentStatusById(paymentId: string) {
         console.log('🔍 Finding payment by ID:', paymentId);
 
@@ -552,6 +614,17 @@ export default new (class PaymentService {
 
     // ==================== REFUND METHODS ====================
 
+    /**
+     * @description Initiates a refund process for a payment.
+     * @param {Object} params - Refund parameters.
+     * @param {string} params.paymentId - Subject payment record.
+     * @param {number} params.amount - Amount to refund.
+     * @param {string} [params.reason] - Optional reason for refund.
+     * @param {string} [params.notes] - Internal notes.
+     * @returns {Promise<Object>} Details of the created refund request.
+     * @throws {NotFoundErrorResponse} If payment record missing.
+     * @throws {BadRequestErrorResponse} If validation fails.
+     */
     public async createRefund({
         paymentId,
         amount,

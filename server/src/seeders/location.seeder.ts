@@ -33,8 +33,9 @@ class LocationSeeder extends Seeder {
     }
 
     /**
+     * @description Loads JSON files from the assets directory.
      * @override
-     * Loads JSON files from the assets directory.
+     * @returns {Promise<void>}
      */
     protected async prepare(): Promise<void> {
         this.provinces = await jsonfile.readFile(getAssetPath('provinces.json'));
@@ -43,8 +44,9 @@ class LocationSeeder extends Seeder {
     }
 
     /**
+     * @description Ensures all data files were successfully loaded.
      * @override
-     * Ensures all data files were successfully loaded.
+     * @returns {Promise<void>}
      */
     protected async validate(): Promise<void> {
         if (!this.provinces.length) throw new Error('No province data found');
@@ -53,8 +55,9 @@ class LocationSeeder extends Seeder {
     }
 
     /**
+     * @description Upserts all location entities into the database.
      * @override
-     * Upserts all location entities into the database.
+     * @returns {Promise<void>}
      */
     protected async seed(): Promise<void> {
         // Seed Provinces

@@ -24,27 +24,31 @@ export abstract class Seeder {
      */
     constructor(public readonly name: string) {}
 
-    /** 
-     * Phase 1: Prepare
+    /**
+     * @description Phase 1: Prepare
      * Load and transform raw data from data sources (JSON, Data Classes, etc.).
+     * @returns {Promise<void>}
      */
     protected abstract prepare(): Promise<void>;
 
-    /** 
-     * Phase 2: Validate
+    /**
+     * @description Phase 2: Validate
      * Validate preconditions and dependencies before proceeding with the seed.
+     * @returns {Promise<void>}
      */
     protected abstract validate(): Promise<void>;
 
-    /** 
-     * Phase 3: Seed
+    /**
+     * @description Phase 3: Seed
      * Execute upsert operations against the database.
+     * @returns {Promise<void>}
      */
     protected abstract seed(): Promise<void>;
 
-    /** 
-     * Run all phases sequentially (Prepare -> Validate -> Seed).
+    /**
+     * @description Run all phases sequentially (Prepare -> Validate -> Seed).
      * This coordinates the overall seeding process for the specific instance.
+     * @returns {Promise<void>}
      */
     async run(): Promise<void> {
         console.log(`\n🌱 [${this.name}] Starting...`);

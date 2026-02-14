@@ -41,24 +41,27 @@ class CategorySeeder extends Seeder {
     }
 
     /**
+     * @description Loads raw category data from the central manager.
      * @override
-     * Loads raw category data from the central manager.
+     * @returns {Promise<void>}
      */
     protected async prepare(): Promise<void> {
         this.seedData = getSeedData();
     }
 
     /**
+     * @description Ensures we have data to seed.
      * @override
-     * Ensures we have data to seed.
+     * @returns {Promise<void>}
      */
     protected async validate(): Promise<void> {
         if (!this.seedData.length) throw new Error('No category data found');
     }
 
     /**
+     * @description Executes the seeding process in two sub-steps (Media then Categories).
      * @override
-     * Executes the seeding process in two sub-steps (Media then Categories).
+     * @returns {Promise<void>}
      */
     protected async seed(): Promise<void> {
         // --- Step 1: Seed Media (Icons) ---

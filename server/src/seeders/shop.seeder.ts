@@ -42,16 +42,18 @@ class ShopSeeder extends Seeder {
     }
 
     /**
+     * @description Retrieves the shop definitions from the manager.
      * @override
-     * Retrieves the shop definitions from the manager.
+     * @returns {Promise<void>}
      */
     protected async prepare(): Promise<void> {
         this.shops = seederDataManager.table<IShopData>('shops')?.getAll() || [];
     }
 
     /**
+     * @description Verifies that the prerequisite location data has been seeded.
      * @override
-     * Verifies that the prerequisite location data has been seeded.
+     * @returns {Promise<void>}
      */
     protected async validate(): Promise<void> {
         if (!this.shops.length) throw new Error('No shop data found');
@@ -66,8 +68,9 @@ class ShopSeeder extends Seeder {
     }
 
     /**
+     * @description Executes the seeding process in sub-steps (Seed Logo -> Resolve Location -> Upsert Shop).
      * @override
-     * Executes the seeding process in sub-steps.
+     * @returns {Promise<void>}
      */
     protected async seed(): Promise<void> {
         // Ensure public directory exists
@@ -113,9 +116,10 @@ class ShopSeeder extends Seeder {
     /* ---------------------------------------------------------- */
 
     /**
-     * Creates a media record for the shop logo and copies the image
+     * @description Creates a media record for the shop logo and copies the image
      * from seed assets to the public directory.
-     * @returns The ObjectId of the created media record, or undefined
+     * @param {IShopData} shop - The shop data containing logo file info.
+     * @returns {Promise<mongoose.Types.ObjectId | undefined>} The ObjectId of the created media record, or undefined if no logo.
      */
     private async seedShopLogo(shop: IShopData): Promise<mongoose.Types.ObjectId | undefined> {
         if (!shop.shop_logo) return undefined;
@@ -165,8 +169,9 @@ class ShopSeeder extends Seeder {
     /* ---------------------------------------------------------- */
 
     /**
-     * Resolves province/district/ward names to a location record.
-     * @returns The ObjectId of the location, or null if resolution fails
+     * @description Resolves province/district/ward names to a location record.
+     * @param {IShopData} shop - The shop data containing location names.
+     * @returns {Promise<mongoose.Types.ObjectId | null>} The ObjectId of the location, or null if resolution fails.
      */
     private async resolveLocation(shop: IShopData): Promise<mongoose.Types.ObjectId | null> {
         const province = await provinceModel.findOne({ province_name: shop.provinceName });

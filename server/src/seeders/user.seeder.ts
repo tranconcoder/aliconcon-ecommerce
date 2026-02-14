@@ -26,16 +26,18 @@ class UserSeeder extends Seeder {
     }
 
     /**
+     * @description Retrieves the list of users to seed from the manager.
      * @override
-     * Retrieves the list of users to seed from the manager.
+     * @returns {Promise<void>}
      */
     protected async prepare(): Promise<void> {
         this.users = seederDataManager.table<IUserData>('users')?.getAll() || [];
     }
 
     /**
+     * @description Validates that requested roles actually exist in the database.
      * @override
-     * Validates that requested roles actually exist in the database.
+     * @returns {Promise<void>}
      */
     protected async validate(): Promise<void> {
         if (!this.users.length) throw new Error('No user data found');
@@ -50,8 +52,9 @@ class UserSeeder extends Seeder {
     }
 
     /**
+     * @description Hashes passwords and upserts user records.
      * @override
-     * Hashes passwords and upserts user records.
+     * @returns {Promise<void>}
      */
     protected async seed(): Promise<void> {
         // Generate a common salt for security and consistency during seeding

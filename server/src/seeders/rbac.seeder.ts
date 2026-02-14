@@ -32,24 +32,27 @@ class RBACSeeder extends Seeder {
     }
 
     /**
+     * @description Loads role definitions from the data manager.
      * @override
-     * Loads role definitions from the data manager.
+     * @returns {Promise<void>}
      */
     protected async prepare(): Promise<void> {
         this.roles = seederDataManager.table<IRBACRoleData>('rbac')?.getAll() || [];
     }
 
     /**
+     * @description Ensures role data was loaded.
      * @override
-     * Ensures role data was loaded.
+     * @returns {Promise<void>}
      */
     protected async validate(): Promise<void> {
         if (!this.roles.length) throw new Error('No RBAC role data found');
     }
 
     /**
+     * @description Upserts resources first, then roles with resolved resource IDs.
      * @override
-     * Upserts resources first, then roles with resolved resource IDs.
+     * @returns {Promise<void>}
      */
     protected async seed(): Promise<void> {
         await this.seedResources();
@@ -60,7 +63,10 @@ class RBACSeeder extends Seeder {
     /*                     Seed Resources                         */
     /* ---------------------------------------------------------- */
 
-    /** Upsert all resource entries from the Resources enum. */
+    /**
+     * @description Upsert all resource entries from the Resources enum.
+     * @returns {Promise<void>}
+     */
     private async seedResources(): Promise<void> {
         const resources = Object.values(Resources);
 
@@ -82,7 +88,10 @@ class RBACSeeder extends Seeder {
     /*                       Seed Roles                           */
     /* ---------------------------------------------------------- */
 
-    /** Upsert all role definitions, replacing resource names with DB IDs. */
+    /**
+     * @description Upsert all role definitions, replacing resource names with DB IDs.
+     * @returns {Promise<void>}
+     */
     private async seedRoles(): Promise<void> {
         for (const role of this.roles) {
             // Resolve resource names → ObjectIds

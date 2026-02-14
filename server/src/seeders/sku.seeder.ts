@@ -5,6 +5,9 @@
 
 import skuModel from '@/models/sku.model.js';
 import { spuModel } from '@/models/spu.model.js';
+import mediaModel from '@/models/media.model.js';
+import { seederDataManager } from './data/index.js';
+import type { ISKUData } from './data/sku.data.js';
 import { Seeder } from './seeder.js';
 
 /* ---------------------------------------------------------- */
@@ -48,33 +51,70 @@ const createOrUpdateSKU = async (spuId: any, tierIdx: number[], data: any) => {
  */
 class SKUSeeder extends Seeder {
     private spus: any[] = [];
+    private skuData: any[] = [];
 
     constructor() {
         super('SKU');
     }
 
     /**
+     * @description Retrieves all standard product units (SPUs) from the database.
      * @override
-     * Retrieves all standard product units (SPUs) from the database.
+     * @returns {Promise<void>}
      */
     protected async prepare(): Promise<void> {
         this.spus = await spuModel.find({});
+        this.skuData = seederDataManager.table<ISKUData>('skus')?.getAll() || [];
     }
 
     /**
+     * @description Verifies that SPUs exist before attempting to generate SKUs.
      * @override
-     * Verifies that SPUs exist before attempting to generate SKUs.
+     * @returns {Promise<void>}
      */
     protected async validate(): Promise<void> {
         if (!this.spus.length) throw new Error('No SPU records found — run SPU seeder first');
     }
 
     /**
+     * @description Iterates through SPUs to generate and upsert SKU combinations.
      * @override
-     * Iterates through SPUs to generate and upsert SKU combinations.
+     * @returns {Promise<void>}
      */
     protected async seed(): Promise<void> {
+        // Clear existing data to ensure fresh SKU generation
+        await skuModel.deleteMany({});
+        console.log('[SKU Seeder] Cleared existing SKU records');
+
         for (const spu of this.spus) {
+            // Check if there are predefined SKUs for this SPU (by slug)
+            const predefinedSkus = this.skuData.filter(s => s.productSlug === spu.product_slug);
+
+            if (predefinedSkus.length > 0) {
+                // Step 0: Seed predefined SKUs
+                for (const pre of predefinedSkus) {
+                    // Resolve thumb and images ObjectIDs
+                    const thumbMedia = await mediaModel.findOne({ media_fileName: pre.thumb });
+                    const imageMedias = await mediaModel.find({ media_fileName: { $in: pre.images } });
+                    const imageIds = imageMedias.map(m => m._id);
+
+                    if (!thumbMedia) {
+                        console.warn(`[SKU Seeder] Warning: Thumbnail ${pre.thumb} not found for SKU in ${spu.product_slug}`);
+                    }
+
+                    await createOrUpdateSKU(spu._id, pre.tierIdx, {
+                        sku_product: spu._id,
+                        sku_tier_idx: pre.tierIdx,
+                        sku_price: pre.price,
+                        sku_stock: pre.stock,
+                        sku_thumb: thumbMedia?._id || spu.product_thumb,
+                        sku_images: imageIds.length > 0 ? imageIds : spu.product_images,
+                        is_deleted: false
+                    });
+                }
+                continue; // Skip dynamic generation for this SPU
+            }
+
             const product_price = spu.product_price || 0;
             const product_variations = spu.product_variations || [];
             const product_thumb = spu.product_thumb;
