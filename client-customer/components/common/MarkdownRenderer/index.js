@@ -63,20 +63,31 @@ const MarkdownRenderer = ({ content, className = '' }) => {
             if (src && src.startsWith('media://')) {
                 const mediaId = src.replace('media://', '');
                 return (
-                    <img 
-                        src={`http://localhost:4000/media/${mediaId}`} 
-                        alt={alt} 
-                        className={styles.image} 
-                    />
+                    <figure className={styles.imageContainer}>
+                        <img 
+                            src={`http://localhost:4000/media/${mediaId}`} 
+                            alt={alt} 
+                            className={styles.image} 
+                        />
+                        {alt && <figcaption className={styles.imageCaption}>{alt}</figcaption>}
+                    </figure>
                 );
             }
-            return <img src={src} alt={alt} className={styles.image} />;
+            return (
+                <figure className={styles.imageContainer}>
+                    <img src={src} alt={alt} className={styles.image} />
+                    {alt && <figcaption className={styles.imageCaption}>{alt}</figcaption>}
+                </figure>
+            );
         },
     };
 
     return (
         <div className={`${styles.markdownRenderer} ${className}`}>
-            <ReactMarkdown components={components}>
+            <ReactMarkdown 
+                components={components}
+                urlTransform={(url) => url} // Allow all URLs including media://
+            >
                 {content}
             </ReactMarkdown>
         </div>
