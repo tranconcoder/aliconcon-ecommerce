@@ -103,129 +103,52 @@ export default function ProductDetailPage() {
           }
         : null;
 
-    // Helper functions for variation logic
-    // B1: Initially show all options that exist in any sku_tier_idx
-    // B2: When making selections, disable options that don't have compatible SKUs
-    // B3: When selecting, keep compatible fields and remove incompatible ones
-    // B4: Allow deselection by clicking the same button again
+    // ── Helpers ──────────────────────────────────────────────
+    // Collect ALL SKUs (sku_others + current product SKU) into one list
+    const allSkus = useMemo(() => {
+        if (!product) return [];
+        const skus = [...(product.sku_others || [])];
+        if (product.sku_tier_idx) skus.push(product as any);
+        return skus;
+    }, [product]);
 
-    const getAllAvailableOptions = (variationIndex: number) => {
-        if (!product?.sku_others) return [];
-
-        const availableOptions = new Set<number>();
-
-        // Collect options from all other SKUs
-        product.sku_others.forEach((sku) => {
-            if (sku.sku_tier_idx && sku.sku_tier_idx[variationIndex] !== undefined) {
-                availableOptions.add(sku.sku_tier_idx[variationIndex]);
-            }
-        });
-
-        // Also include options from current SKU if it has sku_tier_idx
-        if (product.sku_tier_idx && product.sku_tier_idx[variationIndex] !== undefined) {
-            availableOptions.add(product.sku_tier_idx[variationIndex]);
-        }
-
-        console.log(
-            `Available options for variation ${variationIndex}:`,
-            Array.from(availableOptions)
-        );
-        return Array.from(availableOptions);
-    };
-
-    const getValidVariationOptions = (variationIndex: number) => {
-        if (!product?.sku_others || !product?.spu_select?.product_variations) return [];
-
-        // If no selections made, return all available options
-        if (Object.keys(selectedVariations).length === 0) {
-            return getAllAvailableOptions(variationIndex);
-        }
-
-        const validOptions = new Set<number>();
-        const allSkus = [...product.sku_others];
-
-        // Add current SKU if it has sku_tier_idx
-        if (product.sku_tier_idx) {
-            allSkus.push(product as any);
-        }
-
-        // Get options that are compatible with current selections
+    // Get every option index that appears in at least one SKU for a variation
+    const getAllAvailableOptions = (variationIndex: number): Set<number> => {
+        const available = new Set<number>();
         allSkus.forEach((sku) => {
-            if (sku.sku_tier_idx && sku.sku_tier_idx[variationIndex] !== undefined) {
-                // Check if this SKU is compatible with current selections
-                let isCompatible = true;
-                Object.entries(selectedVariations).forEach(([varIdx, optIdx]) => {
-                    const varIndex = parseInt(varIdx);
-                    if (varIndex !== variationIndex && sku.sku_tier_idx[varIndex] !== optIdx) {
-                        isCompatible = false;
-                    }
-                });
-
-                if (isCompatible) {
-                    validOptions.add(sku.sku_tier_idx[variationIndex]);
-                }
+            if (sku.sku_tier_idx?.[variationIndex] !== undefined) {
+                available.add(sku.sku_tier_idx[variationIndex]);
             }
         });
-
-        return Array.from(validOptions);
+        return available;
     };
 
-    const isOptionDisabled = (variationIndex: number, optionIndex: number) => {
-        if (!product?.sku_others) return true;
-
-        // B1: Check if this option exists in ANY SKU (including current SKU)
-        const allSkus = [...product.sku_others];
-
-        // Add current SKU if it has sku_tier_idx
-        if (product.sku_tier_idx) {
-            allSkus.push(product as any);
-        }
-
-        const optionExists = allSkus.some(
-            (sku) => sku.sku_tier_idx && sku.sku_tier_idx[variationIndex] === optionIndex
+    /**
+     * Determines if a specific option should be disabled.
+     * Rule 1: If the option index doesn't exist in ANY SKU → always disabled.
+     * Rule 2: If nothing is selected yet → all existing options are enabled.
+     * Rule 3: If there are selections → only enable options that have at least
+     *         one compatible SKU with the current selections on OTHER variations.
+     */
+    const isOptionDisabled = (variationIndex: number, optionIndex: number): boolean => {
+        // Rule 1: option must exist in at least one SKU
+        const existsInAnySku = allSkus.some(
+            (sku) => sku.sku_tier_idx?.[variationIndex] === optionIndex
         );
+        if (!existsInAnySku) return true;
 
-        console.log(`Checking option ${optionIndex} for variation ${variationIndex}:`, {
-            optionExists,
-            selectedVariations,
-            allSkusCount: allSkus.length,
-            allSkuTierIdx: allSkus.map((sku) => sku.sku_tier_idx)
-        });
+        // Rule 2: nothing selected → everything available is enabled
+        if (Object.keys(selectedVariations).length === 0) return false;
 
-        // If option doesn't exist in any SKU, disable it
-        if (!optionExists) return true;
-
-        // B1: If no selections are made, enable ALL existing options (this is the key fix!)
-        if (Object.keys(selectedVariations).length === 0) {
-            console.log(
-                `No selections made, enabling option ${optionIndex} for variation ${variationIndex}`
-            );
-            return false;
-        }
-
-        // B2: Check if selecting this option would have any compatible SKU
-        // We need to find at least one SKU that matches this option AND is compatible with other selections
-        const hasCompatibleSku = allSkus.some((sku) => {
-            if (!sku.sku_tier_idx || sku.sku_tier_idx[variationIndex] !== optionIndex) {
-                return false;
-            }
-
-            // Check if this SKU is compatible with OTHER current selections (not including current variationIndex)
+        // Rule 3: check compatibility with other selected values
+        return !allSkus.some((sku) => {
+            if (!sku.sku_tier_idx || sku.sku_tier_idx[variationIndex] !== optionIndex) return false;
             return Object.entries(selectedVariations).every(([varIdx, optIdx]) => {
-                const varIndex = parseInt(varIdx);
-                // Skip the current variation we're testing
-                if (varIndex === variationIndex) return true;
-                // Check if this SKU matches the other selections
-                return sku.sku_tier_idx[varIndex] === optIdx;
+                const vi = parseInt(varIdx);
+                if (vi === variationIndex) return true; // skip self
+                return sku.sku_tier_idx[vi] === optIdx;
             });
         });
-
-        console.log(
-            `Option ${optionIndex} for variation ${variationIndex} - hasCompatibleSku:`,
-            hasCompatibleSku
-        );
-
-        return !hasCompatibleSku;
     };
 
     const findMatchingSku = (selections: { [key: string]: number }) => {
@@ -256,50 +179,41 @@ export default function ProductDetailPage() {
         );
     };
 
-    // Handle variation changes with improved logic
+    // Handle variation selection
     const handleVariationChange = (variationIndex: string, optionIndex: number) => {
         setSelectedVariations((prev) => {
-            const newSelections = { ...prev };
-            const varIdx = variationIndex;
+            const next = { ...prev };
 
-            // B4: If clicking the same option, deselect it (allow deselection)
-            if (newSelections[varIdx] === optionIndex) {
-                delete newSelections[varIdx];
-                return newSelections;
+            // Toggle: click same option → deselect
+            if (next[variationIndex] === optionIndex) {
+                delete next[variationIndex];
+                return next;
             }
 
-            // B3: Set the new selection first
-            newSelections[varIdx] = optionIndex;
+            // Set new selection
+            next[variationIndex] = optionIndex;
 
-            // B3: Check each other variation to see if its current selection is still valid
-            Object.keys(newSelections).forEach((otherVarIdx) => {
-                if (otherVarIdx !== varIdx) {
-                    const otherOptionIndex = newSelections[otherVarIdx];
-
-                    // Get all SKUs including current SKU
-                    const allSkus = [...(product?.sku_others || [])];
-                    if (product?.sku_tier_idx) {
-                        allSkus.push(product as any);
-                    }
-
-                    // Check if there exists any SKU that matches the new selection AND the other selection
-                    const isStillValid = allSkus.some((sku) => {
-                        if (!sku.sku_tier_idx) return false;
-                        return (
-                            sku.sku_tier_idx[parseInt(varIdx)] === optionIndex &&
-                            sku.sku_tier_idx[parseInt(otherVarIdx)] === otherOptionIndex
-                        );
-                    });
-
-                    // If no SKU supports both selections, remove the other selection
-                    if (!isStillValid) {
-                        delete newSelections[otherVarIdx];
-                    }
-                }
+            // Invalidate other selections that are no longer compatible
+            Object.keys(next).forEach((otherIdx) => {
+                if (otherIdx === variationIndex) return;
+                const otherOpt = next[otherIdx];
+                const stillValid = allSkus.some((sku) => {
+                    if (!sku.sku_tier_idx) return false;
+                    return (
+                        sku.sku_tier_idx[parseInt(variationIndex)] === optionIndex &&
+                        sku.sku_tier_idx[parseInt(otherIdx)] === otherOpt
+                    );
+                });
+                if (!stillValid) delete next[otherIdx];
             });
 
-            return newSelections;
+            return next;
         });
+    };
+
+    // Reset all selections
+    const handleResetVariations = () => {
+        setSelectedVariations({});
     };
 
     // Event handlers for user interactions
@@ -423,18 +337,8 @@ export default function ProductDetailPage() {
                     setProduct(productData);
                     setCurrentSku(productData);
 
-                    // Initialize selectedVariations from current SKU's sku_tier_idx
-                    if (productData?.sku_tier_idx && productData.spu_select?.product_variations) {
-                        const initialSelections: { [key: string]: number } = {};
-                        productData.sku_tier_idx.forEach(
-                            (optionIndex: number, variationIndex: number) => {
-                                if (optionIndex !== undefined && optionIndex !== null) {
-                                    initialSelections[variationIndex.toString()] = optionIndex;
-                                }
-                            }
-                        );
-                        setSelectedVariations(initialSelections);
-                    }
+                    // Start with no pre-selected variations so user picks from scratch
+                    setSelectedVariations({});
 
                     // Fetch shop information
                     if (productData?.spu_select?.product_shop) {
@@ -586,6 +490,7 @@ export default function ProductDetailPage() {
                                             variations={product.spu_select.product_variations}
                                             selectedVariations={selectedVariations}
                                             onVariationChange={handleVariationChange}
+                                            onReset={handleResetVariations}
                                             isOptionDisabled={isOptionDisabled}
                                         />
                                     )}
