@@ -38,7 +38,7 @@ function SKUImagesUpload({
                                 className={cx('sku-image-item')}
                                 onClick={() => onOpenPreview(image, 'additional', skuIndex, imageIndex)}
                             >
-                                <img src={image.preview} alt={`SKU image ${imageIndex}`} />
+                                <img src={image.preview} alt={`SKU variant ${imageIndex}`} />
                                 <button
                                     type="button"
                                     className={cx('remove-image')}
@@ -71,7 +71,7 @@ function SKUImagesUpload({
                                                 <img
                                                     key={idx}
                                                     src={url}
-                                                    alt={`Image preview ${idx}`}
+                                                    alt={`Preview ${idx}`}
                                                     className={cx('temp-preview-image')}
                                                 />
                                             )

@@ -496,7 +496,7 @@ function ProductImages({ formData, setFormData }) {
                                 className={cx('additional-image-preview')}
                                 onClick={() => handleOpenPreview(image, 'additional', index)}
                             >
-                                <img src={image.preview} alt={`Image ${index + 1}`} />
+                                <img src={image.preview} alt={`Product ${index + 1}`} />
                                 <button
                                     type="button"
                                     className={cx('remove-image')}
