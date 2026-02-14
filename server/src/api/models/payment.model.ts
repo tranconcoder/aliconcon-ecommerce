@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose';
 import { required, ObjectId, timestamps } from '@/configs/mongoose.config.js';
 
 export const PAYMENT_MODEL_NAME = 'Payment';
-export const PAYMENT_COLLECTION_NAME = 'Payments';
+export const PAYMENT_COLLECTION_NAME = 'payments';
 
 export const paymentSchema = new Schema<model.payment.PaymentSchema>(
     {

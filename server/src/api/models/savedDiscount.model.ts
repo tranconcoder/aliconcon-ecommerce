@@ -1,7 +1,7 @@
 import { Schema, model, Document } from 'mongoose';
 
 const DOCUMENT_NAME = 'SavedDiscount';
-const COLLECTION_NAME = 'SavedDiscounts';
+const COLLECTION_NAME = 'saved_discounts';
 
 export interface SavedDiscountItem {
     discount_id: Schema.Types.ObjectId;
