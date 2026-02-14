@@ -15,6 +15,7 @@ declare global {
                     /* ------------------------ Product ------------------------ */
                     product_name: string;
                     product_shop: moduleTypes.mongoose.ObjectId;
+                    product_price: number;
                     product_quantity: number;
                     product_description: string;
                     product_category: moduleTypes.mongoose.ObjectId;
@@ -35,6 +36,7 @@ declare global {
                         variation_id: moduleTypes.mongoose.ObjectId;
                         variation_name: string;
                         variation_values: Array<string>;
+                        variation_images: Array<moduleTypes.mongoose.ObjectId>;
                     }>;
 
                     /* ------------------------ Metadata ------------------------ */

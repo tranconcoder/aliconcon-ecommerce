@@ -9,6 +9,8 @@
     "scripts": {
         "dev": "NODE_ENV=development bun run --watch server.ts",
         "start": "NODE_ENV=production tsx server.ts",
+        "seed": "NODE_ENV=development bun run scripts/seed.ts",
+        "seed:all": "NODE_ENV=development bun run scripts/seed-all.ts",
         "pm2:start": "pm2 start ecosystem.config.js --env production",
         "pm2:dev": "pm2 start ecosystem.config.js --env development",
         "pm2:stop": "pm2 stop do-an-1-server",

@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "seed:docker:all": "docker compose exec server bun run scripts/seed-all.ts",
+    "seed:docker": "docker compose exec server bun run scripts/seed.ts"
+  },
   "dependencies": {
     "@types/express": "^5.0.2",
     "create-next-app": "^15.2.3",

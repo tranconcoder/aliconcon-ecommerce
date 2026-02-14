@@ -18,18 +18,6 @@ import categoryService from '@/services/category.service.js';
 // Socket.IO
 import SocketIOService from '@/services/socketio.service.js';
 
-// await new Promise((resolve) => {
-//     // kill 4000 with bun
-//     try {
-//         console.log('Attempting to kill port 4000...');
-//         child_process.execSync('bun run kill-port 4000');
-//         console.log('Port 4000 killed successfully.');
-//         resolve(null);
-//     } catch (error: any) {
-//         console.error(`Failed to kill port 4000: ${error.message}`);
-//     }
-// });
-
 const server = app.listen(Number(PORT), () => {
     console.log(`Server is running at ${BASE_URL}`);
 });
@@ -81,6 +69,7 @@ if (isInit) {
     const provinceJsonFile = path.join(import.meta.dirname, './src/api/assets/provinces.json');
     const districtsJsonFile = path.join(import.meta.dirname, './src/api/assets/districts.json');
     const wardJsonFile = path.join(import.meta.dirname, './src/api/assets/wards.json');
+
     jsonfile.readFile(provinceJsonFile, (err, data) => {
         if (err) {
             return console.error(err);
@@ -92,6 +81,7 @@ if (isInit) {
             })
         ).catch(() => { });
     });
+
     jsonfile.readFile(districtsJsonFile, (err, data) => {
         if (err) {
             return console.error(err);
@@ -103,6 +93,7 @@ if (isInit) {
             })
         ).catch(() => { });
     });
+
     jsonfile.readFile(wardJsonFile, (err, data) => {
         if (err) {
             return console.error(err);
