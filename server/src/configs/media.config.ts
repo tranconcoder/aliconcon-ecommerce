@@ -21,6 +21,14 @@ export const CATEGORY_INIT_BASE_PATH = path.join(
 );
 
 /* ---------------------------------------------------------- */
+/*                            Shop                            */
+/* ---------------------------------------------------------- */
+export const SHOP_INIT_BASE_PATH = path.join(
+    import.meta.dirname,
+    '../api/assets/images/shops'
+);
+
+/* ---------------------------------------------------------- */
 /*                             SPU                            */
 /* ---------------------------------------------------------- */
 export const SPU_MAX_SIZE = bytes.parse('5MB') as number;

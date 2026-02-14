@@ -1,63 +1,198 @@
+/**
+ * @file shop.seeder.ts
+ * @description Seeder for initializing shops, their logos, and spatial locations.
+ */
 
-import shopModel from '@/models/shop.model.js';
-import { ShopStatus, ShopType } from '@/enums/shop.enum.js';
+import fs from 'fs';
+import path from 'path';
 import mongoose from 'mongoose';
-import { userSeeder } from './user.seeder.js';
+import shopModel from '@/models/shop.model.js';
+import mediaModel from '@/models/media.model.js';
 import { locationModel, districtModel, provinceModel, wardModel } from '@/models/location.model.js';
+import { SHOP_INIT_BASE_PATH } from '@/configs/media.config.js';
+import { MediaMimeTypes, MediaTypes } from '@/enums/media.enum.js';
+import { seederDataManager } from './data/index.js';
+import type { IShopData } from './data/shop.data.js';
+import { Seeder } from './seeder.js';
 
-const SHOP_ID = '000000000000000000000001';
+/* ---------------------------------------------------------- */
+/*                        Constants                           */
+/* ---------------------------------------------------------- */
 
-export const initShop = async () => {
-    // Find a location to link
-    const province = await provinceModel.findOne({ province_name: 'Thành phố Hồ Chí Minh' });
-    const district = await districtModel.findOne({ district_name: 'Quận 1', province: province?._id });
-    const ward = await wardModel.findOne({ ward_name: 'Phường Bến Nghé', district: district?._id });
+/** Directory where shop logos will be served from at runtime */
+const SHOP_LOGO_PUBLIC = path.join(import.meta.dirname, '../../../public/shops');
 
-    if (!province || !district || !ward) {
-        console.error('❌ Location data not found for Shop seeder');
-        return;
+/* ---------------------------------------------------------- */
+/*                        Shop Seeder                         */
+/* ---------------------------------------------------------- */
+
+/**
+ * Seeder implementation for shops.
+ * Handles multi-step seeding:
+ *   1. Create media records for shop logos
+ *   2. Copy logo images to public directory
+ *   3. Resolve geographic locations
+ *   4. Upsert shop records linking to media and location
+ */
+class ShopSeeder extends Seeder {
+    private shops: IShopData[] = [];
+
+    constructor() {
+        super('Shop');
     }
 
-    const location = await locationModel.findOneAndUpdate(
-        { 
-            province: province._id,
-            district: district._id,
-            ward: ward._id,
-            address: '123 Đường Lê Lợi' 
-        },
-        {
-            province: province._id,
-            district: district._id,
-            ward: ward._id,
-            address: '123 Đường Lê Lợi',
-            text: '123 Đường Lê Lợi, Phường Bến Nghé, Quận 1, Thành phố Hồ Chí Minh'
-        },
-        { upsert: true, new: true }
-    );
+    /**
+     * @override
+     * Retrieves the shop definitions from the manager.
+     */
+    protected async prepare(): Promise<void> {
+        this.shops = seederDataManager.table<IShopData>('shops')?.getAll() || [];
+    }
 
-    const shopData = {
-        _id: new mongoose.Types.ObjectId(SHOP_ID),
-        shop_userId: userSeeder._id,
-        shop_name: 'Aliconcon Official Store',
-        shop_email: 'shop@aliconcon.com',
-        shop_type: ShopType.COMPANY,
-        shop_certificate: 'CERT-123456',
-        shop_location: location._id,
-        shop_phoneNumber: '0987654321',
-        shop_description: 'Official store for Aliconcon products',
-        
-        shop_owner_fullName: userSeeder.user_fullName,
-        shop_owner_email: userSeeder.user_email,
-        shop_owner_phoneNumber: userSeeder.phoneNumber,
-        shop_owner_cardID: '123456789',
+    /**
+     * @override
+     * Verifies that the prerequisite location data has been seeded.
+     */
+    protected async validate(): Promise<void> {
+        if (!this.shops.length) throw new Error('No shop data found');
 
-        shop_status: ShopStatus.ACTIVE,
-        is_brand: true
-    };
+        // Check for required provinces for each shop
+        for (const s of this.shops) {
+            const province = await provinceModel.findOne({ province_name: s.provinceName });
+            if (!province) {
+                console.warn(`    ⚠ Province "${s.provinceName}" not found — shop "${s.shop_name}" may fail`);
+            }
+        }
+    }
 
-    await shopModel.findOneAndUpdate(
-        { _id: shopData._id },
-        shopData,
-        { upsert: true, new: true }
-    );
-};
+    /**
+     * @override
+     * Executes the seeding process in sub-steps.
+     */
+    protected async seed(): Promise<void> {
+        // Ensure public directory exists
+        fs.mkdirSync(SHOP_LOGO_PUBLIC, { recursive: true });
+
+        for (const s of this.shops) {
+            // --- Step 1: Seed shop logo media ---
+            const logoMediaId = await this.seedShopLogo(s);
+
+            // --- Step 2: Resolve geographic location ---
+            const locationId = await this.resolveLocation(s);
+            if (!locationId) continue;
+
+            // --- Step 3: Upsert shop record ---
+            const shopPayload = {
+                _id: new mongoose.Types.ObjectId(s._id),
+                shop_userId: new mongoose.Types.ObjectId(s.shop_userId),
+                shop_name: s.shop_name,
+                shop_logo: logoMediaId,
+                shop_email: s.shop_email,
+                shop_type: s.shop_type,
+                shop_certificate: s.shop_certificate,
+                shop_location: locationId,
+                shop_phoneNumber: s.shop_phoneNumber,
+                shop_description: s.shop_description,
+                shop_owner_cardID: s.shop_owner_cardID,
+                shop_status: s.shop_status,
+                is_brand: s.is_brand
+            };
+
+            await shopModel.findOneAndUpdate(
+                { _id: shopPayload._id },
+                shopPayload,
+                { upsert: true, new: true }
+            );
+
+            console.log(`    ✓ Shop: ${s.shop_name}`);
+        }
+    }
+
+    /* ---------------------------------------------------------- */
+    /*                     Seed Shop Logo                         */
+    /* ---------------------------------------------------------- */
+
+    /**
+     * Creates a media record for the shop logo and copies the image
+     * from seed assets to the public directory.
+     * @returns The ObjectId of the created media record, or undefined
+     */
+    private async seedShopLogo(shop: IShopData): Promise<mongoose.Types.ObjectId | undefined> {
+        if (!shop.shop_logo) return undefined;
+
+        const srcPath = path.join(SHOP_INIT_BASE_PATH, shop.shop_logo);
+        const destPath = path.join(SHOP_LOGO_PUBLIC, shop.shop_logo);
+
+        // Copy image file to public directory
+        if (fs.existsSync(srcPath)) {
+            fs.copyFileSync(srcPath, destPath);
+            console.log(`    ✓ Logo copied: ${shop.shop_logo}`);
+        } else {
+            console.warn(`    ⚠ Logo file not found: ${srcPath}`);
+        }
+
+        // Get file size for media record
+        const fileSize = fs.existsSync(destPath)
+            ? fs.statSync(destPath).size
+            : 0;
+
+        // Determine MIME type from extension
+        const ext = path.extname(shop.shop_logo).toLowerCase();
+        const mimeType = ext === '.png' ? MediaMimeTypes.IMAGE_PNG : MediaMimeTypes.IMAGE_JPEG;
+
+        // Create media record
+        const media = await mediaModel.findOneAndUpdate(
+            { media_fileName: shop.shop_logo, media_title: `${shop.shop_name} Logo` },
+            {
+                media_title: `${shop.shop_name} Logo`,
+                media_fileName: shop.shop_logo,
+                media_filePath: `${SHOP_LOGO_PUBLIC}/${shop.shop_logo}`,
+                media_fileType: MediaTypes.IMAGE,
+                media_fileSize: fileSize,
+                media_mimeType: mimeType,
+                media_desc: `Shop logo for ${shop.shop_name}`,
+                media_isFolder: false
+            },
+            { upsert: true, new: true }
+        );
+
+        console.log(`    ✓ Media: ${shop.shop_name} Logo`);
+        return media._id as mongoose.Types.ObjectId;
+    }
+
+    /* ---------------------------------------------------------- */
+    /*                     Resolve Location                       */
+    /* ---------------------------------------------------------- */
+
+    /**
+     * Resolves province/district/ward names to a location record.
+     * @returns The ObjectId of the location, or null if resolution fails
+     */
+    private async resolveLocation(shop: IShopData): Promise<mongoose.Types.ObjectId | null> {
+        const province = await provinceModel.findOne({ province_name: shop.provinceName });
+        const district = await districtModel.findOne({ district_name: shop.districtName, province: province?._id });
+        const ward = await wardModel.findOne({ ward_name: shop.wardName, district: district?._id });
+
+        if (!province || !district || !ward) {
+            console.error(`    ❌ Location not found for shop: ${shop.shop_name}`);
+            return null;
+        }
+
+        const location = await locationModel.findOneAndUpdate(
+            { province: province._id, district: district._id, ward: ward._id, address: shop.address },
+            {
+                province: province._id,
+                district: district._id,
+                ward: ward._id,
+                address: shop.address,
+                text: `${shop.address}, ${shop.wardName}, ${shop.districtName}, ${shop.provinceName}`
+            },
+            { upsert: true, new: true }
+        );
+
+        return location._id as mongoose.Types.ObjectId;
+    }
+}
+
+// Export a singleton instance
+export const shopSeeder = new ShopSeeder();

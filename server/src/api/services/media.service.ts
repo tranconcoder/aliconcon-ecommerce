@@ -8,25 +8,11 @@ import { NotFoundErrorResponse } from '@/response/error.response.js';
 import { createMediaSchema } from '@/validations/zod/media.zod.js';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
-import { categoryMedia } from '@/seeders/media.seeder.js';
 
 export default new (class MediaService {
     /* ---------------------------------------------------------- */
     /*                           Create                           */
     /* ---------------------------------------------------------- */
-    async initMedia() {
-        /* ------------------------- Insert ------------------------- */
-        await Promise.all(
-            categoryMedia.map((media) =>
-                mediaModel.findOneAndReplace({ _id: media._id }, media, {
-                    upsert: true,
-                    lean: true,
-                    new: true
-                })
-            )
-        );
-    }
-
     async createMedia(payload: service.media.arguments.CreateMedia) {
         /* ---------------------- Validate zod ---------------------- */
         const validated = createMediaSchema.parse(payload);

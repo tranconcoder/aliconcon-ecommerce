@@ -21,12 +21,7 @@ export const skuSchema = new Schema<model.sku.SKU>(
 
         sku_tier_idx: {
             type: [Number],
-            required: true,
-            validate: {
-                validator: (v: number[]) => {
-                    return v.length > 0;
-                }
-            }
+            default: []
         },
 
         is_deleted: { type: Boolean, default: false, select: false }

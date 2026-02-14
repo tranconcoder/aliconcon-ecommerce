@@ -1,85 +1,89 @@
+/**
+ * @file user.seeder.ts
+ * @description Seeder for initializing fundamental user accounts and roles.
+ */
+
 import { userModel } from '@/models/user.model.js';
 import roleModel from '@/models/role.model.js';
-import { RoleNames } from '@/enums/rbac.enum.js';
 import bcrypt from 'bcrypt';
-import mongoose from 'mongoose';
+import { seederDataManager } from './data/index.js';
+import type { IUserData } from './data/user.data.js';
+import { Seeder } from './seeder.js';
 
-export const USERS = [
-    {
-        _id: new mongoose.Types.ObjectId('000000000000000000000001'),
-        user_fullName: 'Shop Owner',
-        user_email: 'shop@example.com',
-        password: '123456789aA@',
-        role_name: RoleNames.SHOP,
-        user_status: 'active',
-        user_avatar: '',
-        user_date_of_birth: new Date('1990-01-01'),
-        user_sex: true, 
-        phoneNumber: '0123456789',
-        user_address: '123 Shop St',
-        is_email_verified: true,
-        is_phone_verified: true
-    },
-    {
-        _id: new mongoose.Types.ObjectId('000000000000000000000002'),
-        user_fullName: 'Client User',
-        user_email: 'client@example.com',
-        password: '123456789aA@',
-        role_name: RoleNames.USER,
-        user_status: 'active',
-        user_avatar: '',
-        user_date_of_birth: new Date('1995-05-05'),
-        user_sex: false, 
-        phoneNumber: '0987654321',
-        user_address: '456 Client Rd',
-        is_email_verified: true,
-        is_phone_verified: true
-    },
-    {
-        _id: new mongoose.Types.ObjectId('000000000000000000000003'),
-        user_fullName: 'System Admin',
-        user_email: 'admin@example.com',
-        password: '123456789aA@',
-        role_name: RoleNames.ADMIN,
-        user_status: 'active',
-        user_avatar: '',
-        user_date_of_birth: new Date('1985-12-12'),
-        user_sex: true, 
-        phoneNumber: '0112233445',
-        user_address: '789 Admin Blvd',
-        is_email_verified: true,
-        is_phone_verified: true
+/* ---------------------------------------------------------- */
+/*                        User Seeder                         */
+/* ---------------------------------------------------------- */
+
+/**
+ * Seeder implementation for system users.
+ * Processes defined users, hashes passwords, and assigns appropriate roles.
+ */
+class UserSeeder extends Seeder {
+    private users: IUserData[] = [];
+
+    constructor() {
+        super('User');
     }
-];
 
-export const userSeeder = USERS[0];
+    /**
+     * @override
+     * Retrieves the list of users to seed from the manager.
+     */
+    protected async prepare(): Promise<void> {
+        this.users = seederDataManager.table<IUserData>('users')?.getAll() || [];
+    }
 
-export const initUser = async () => {
-    const salt = await bcrypt.genSalt(10);
+    /**
+     * @override
+     * Validates that requested roles actually exist in the database.
+     */
+    protected async validate(): Promise<void> {
+        if (!this.users.length) throw new Error('No user data found');
 
-    for (const user of USERS) {
-        const role = await roleModel.findOne({ role_name: user.role_name });
-        if (!role) {
-            console.error(`❌ Role ${user.role_name} not found. Skipping user ${user.user_email}`);
-            continue;
+        // Verify role existence for each user to prevent failures in the seed phase
+        for (const user of this.users) {
+            const role = await roleModel.findOne({ role_name: (user as any).role_name });
+            if (!role) {
+                console.warn(`    ⚠ Role "${(user as any).role_name}" not found — user ${user.user_email} will be skipped`);
+            }
         }
-
-        const hashedPassword = await bcrypt.hash(user.password, salt);
-        
-        const payload = {
-            ...user,
-            password: hashedPassword,
-            user_role: role._id
-        };
-
-        // Remove role_name from payload as it's not in user schema
-        delete (payload as any).role_name;
-
-        await userModel.findOneAndUpdate(
-            { _id: user._id },
-            payload,
-            { upsert: true, new: true }
-        );
-        console.log(`  ✓ User ${user.user_email} seeded (${user.role_name})`);
     }
-};
+
+    /**
+     * @override
+     * Hashes passwords and upserts user records.
+     */
+    protected async seed(): Promise<void> {
+        // Generate a common salt for security and consistency during seeding
+        const salt = await bcrypt.genSalt(10);
+
+        for (const user of this.users) {
+            // Find role ID from name
+            const role = await roleModel.findOne({ role_name: (user as any).role_name });
+            if (!role) continue; // Skip if role validation failed or was ignored
+
+            // Securely hash the password
+            const hashedPassword = await bcrypt.hash(user.password, salt);
+            
+            // Build the final user payload
+            const payload = {
+                ...user,
+                password: hashedPassword,
+                user_role: role._id
+            };
+            
+            // Remove auxiliary fields not present in the database schema
+            delete (payload as any).role_name;
+
+            // Perform upsert based on ID
+            await userModel.findOneAndUpdate(
+                { _id: user._id },
+                payload,
+                { upsert: true, new: true }
+            );
+        }
+    }
+}
+
+// Export a singleton instance
+export const userSeeder = new UserSeeder();

@@ -1,4 +1,3 @@
-import { categories } from '@/seeders/category.seeder.js';
 import categoryModel from '@/models/category.model.js';
 import {
     findCategories,
@@ -13,17 +12,6 @@ export default new (class CategoryService {
     /* ---------------------------------------------------------- */
     /*                           Create                           */
     /* ---------------------------------------------------------- */
-    async initCategory() {
-        /* ------------------------- Insert ------------------------- */
-        for (const category of categories) {
-            await categoryModel.findOneAndReplace(
-                { category_name: category.category_name },
-                category,
-                { upsert: true, new: true, lean: true }
-            );
-        }
-    }
-
     async createCategory(payload: service.category.arguments.CreateCategory) {
         const newCategory = await categoryModel.create({ ...payload });
 
