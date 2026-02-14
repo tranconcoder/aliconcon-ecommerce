@@ -6,11 +6,12 @@ import { validateCreateReview } from '@/validations/zod/review.zod';
 import { Router } from 'express';
 
 const reviewRoute = Router();
-reviewRoute.use(authenticate);
+
 
 /* ----------------------- Create review ----------------------- */
 reviewRoute.post(
     "/create",
+    authenticate,
     validateCreateReview,
     catchError(reviewController.createReview)
 );
@@ -18,6 +19,7 @@ reviewRoute.post(
 /* ------------------ Get reviews by order ------------------ */
 reviewRoute.get(
     "/order/:orderId",
+    authenticate,
     validateParamsId("orderId"),
     catchError(reviewController.getReviewsByOrderId)
 );
@@ -39,6 +41,7 @@ reviewRoute.get(
 /* ------------------ Get reviews by shop with pagination ------------------ */
 reviewRoute.get(
     "/shop/own",
+    authenticate,
     catchError(reviewController.getReviewsByShop)
 );
 

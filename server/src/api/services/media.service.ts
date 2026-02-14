@@ -13,6 +13,8 @@ export default new (class MediaService {
     /* ---------------------------------------------------------- */
     /*                           Create                           */
     /* ---------------------------------------------------------- */
+
+
     async createMedia(payload: service.media.arguments.CreateMedia) {
         /* ---------------------- Validate zod ---------------------- */
         const validated = createMediaSchema.parse(payload);
@@ -24,7 +26,17 @@ export default new (class MediaService {
     /*                            Get                             */
     /* ---------------------------------------------------------- */
     async getMediaFile(id: string) {
-        const mediaInfo = await findMediaById({ id, options: { lean: true } });
+        // Try to find by direct ID first
+        let mediaInfo = await findMediaById({ id, options: { lean: true } }).catch(() => null);
+
+        // Fallback: If not found or ID is clearly a filename (has extension), search by media_fileName
+        if (!mediaInfo) {
+            mediaInfo = await findOneMedia({
+                query: { media_fileName: id },
+                options: { lean: true }
+            });
+        }
+
         if (!mediaInfo) throw new NotFoundErrorResponse({ message: 'Not found media!' });
 
         const mediaFilePath = mediaInfo.media_filePath;

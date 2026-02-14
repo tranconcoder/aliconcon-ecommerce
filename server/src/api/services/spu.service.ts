@@ -478,7 +478,12 @@ export default new (class SPUService {
                 lean: true,
                 populate: [
                     { path: 'product_thumb', select: 'media_url media_fileName' },
-                    { path: 'product_images', select: 'media_url media_fileName' }
+                    { path: 'product_images', select: 'media_url media_fileName' },
+                    {
+                        path: 'product_shop',
+                        select: 'shop_name shop_logo',
+                        populate: { path: 'shop_logo', select: 'media_url media_fileName' }
+                    }
                 ]
             }
         });
@@ -528,7 +533,17 @@ export default new (class SPUService {
     async getAllSPUShopByAll({ page, limit }: commonTypes.object.Pagination) {
         return await findSPUPaganation({
             query: { is_deleted: false, is_draft: false, is_publish: true },
-            options: { lean: true },
+            options: {
+                lean: true,
+                populate: [
+                    { path: 'product_thumb', select: 'media_url media_fileName' },
+                    {
+                        path: 'product_shop',
+                        select: 'shop_name shop_logo',
+                        populate: { path: 'shop_logo', select: 'media_url media_fileName' }
+                    }
+                ]
+            },
             page,
             limit
         });

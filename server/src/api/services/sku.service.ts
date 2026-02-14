@@ -9,6 +9,7 @@ import { SPU_COLLECTION_NAME, spuModel } from '@/models/spu.model.js';
 import { getAllSKUAggregate, getAllSKUAggregateSort } from '@/utils/sku.util.js';
 import { findAllSKU } from '@/models/repository/sku/index.js';
 import { findCategories } from '@/models/repository/category/index.js';
+import { SHOP_COLLECTION_NAME } from '@/models/shop.model.js';
 
 export default new (class SKUService {
     /* ---------------------------------------------------------- */
@@ -144,6 +145,31 @@ export default new (class SKUService {
                     localField: 'spu_select.product_category',
                     foreignField: '_id',
                     as: 'category'
+                }
+            },
+            {
+                $lookup: {
+                    from: SHOP_COLLECTION_NAME,
+                    localField: 'spu_select.product_shop',
+                    foreignField: '_id',
+                    as: 'shop'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$shop',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $addFields: {
+                    shop: {
+                        _id: '$shop._id',
+                        shop_name: '$shop.shop_name',
+                        shop_logo: '$shop.shop_logo',
+                        shop_description: '$shop.shop_description',
+                        shop_status: '$shop.shop_status'
+                    }
                 }
             },
             {
@@ -377,6 +403,20 @@ export default new (class SKUService {
                 }
             },
             {
+                $lookup: {
+                    from: SHOP_COLLECTION_NAME,
+                    localField: 'product_shop',
+                    foreignField: '_id',
+                    as: 'shop'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$shop',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
                 $unwind: '$category'
             },
             {
@@ -453,7 +493,15 @@ export default new (class SKUService {
                     'sku.sku_thumb': 1,
                     'sku.sku_images': 1,
                     'sku.sku_tier_idx': 1,
-                    'sku.sku_value': 1
+
+                    'sku.sku_value': 1,
+
+                    /* -------------------------- Shop -------------------------- */
+                    'shop._id': 1,
+                    'shop.shop_name': 1,
+                    'shop.shop_logo': 1,
+                    'shop.shop_description': 1,
+                    'shop.shop_status': 1
                 }
             }
         ]);

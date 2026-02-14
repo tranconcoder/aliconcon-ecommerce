@@ -7,6 +7,7 @@ import { addSlug } from '@/models/middlewares/spu.middleware.js';
 import { USER_MODEL_NAME } from './user.model.js';
 import { CATEGORY_MODEL_NAME } from './category.model.js';
 import { MEDIA_MODEL_NAME } from './media.model.js';
+import { SHOP_MODEL_NAME } from './shop.model.js';
 
 export const SPU_MODEL_NAME = 'SPU';
 export const SPU_COLLECTION_NAME = 'spus';
@@ -19,7 +20,7 @@ const spuSchema = new Schema<model.spu.SPUSchema, true>(
         product_price: { type: Number, required },
         product_description: { type: String, required },
         product_category: { type: ObjectId, ref: CATEGORY_MODEL_NAME, required },
-        product_shop: { type: ObjectId, required, ref: USER_MODEL_NAME },
+        product_shop: { type: ObjectId, required, ref: SHOP_MODEL_NAME },
         product_sold: { type: Number, default: 0 },
         product_rating_avg: {
             default: 0,

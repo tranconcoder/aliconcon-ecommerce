@@ -1,5 +1,6 @@
 import { CATEGORY_COLLECTION_NAME } from '@/models/category.model';
 import { SKU_COLLECTION_NAME } from '@/models/sku.model.js';
+import { SHOP_COLLECTION_NAME } from '@/models/shop.model.js';
 
 export const getAllSKUAggregate = (limit: number, page: number) => [
     {
@@ -17,6 +18,20 @@ export const getAllSKUAggregate = (limit: number, page: number) => [
             localField: 'product_category',
             foreignField: '_id',
             as: 'category'
+        }
+    },
+    {
+        $lookup: {
+            from: SHOP_COLLECTION_NAME,
+            localField: 'product_shop',
+            foreignField: '_id',
+            as: 'shop'
+        }
+    },
+    {
+        $unwind: {
+            path: '$shop',
+            preserveNullAndEmptyArrays: true
         }
     },
     {
@@ -104,7 +119,15 @@ export const getAllSKUAggregate = (limit: number, page: number) => [
             'sku.sku_thumb': 1,
             'sku.sku_images': 1,
             'sku.sku_tier_idx': 1,
-            'sku.sku_value': 1
+
+            'sku.sku_value': 1,
+
+            /* -------------------------- Shop -------------------------- */
+            'shop._id': 1,
+            'shop.shop_name': 1,
+            'shop.shop_logo': 1,
+            'shop.shop_description': 1,
+            'shop.shop_status': 1
         }
     }
 ];
@@ -124,6 +147,20 @@ export const getAllSKUAggregateSort = (limit: number, page: number, sort: string
             localField: 'product_category',
             foreignField: '_id',
             as: 'category'
+        }
+    },
+    {
+        $lookup: {
+            from: SHOP_COLLECTION_NAME,
+            localField: 'product_shop',
+            foreignField: '_id',
+            as: 'shop'
+        }
+    },
+    {
+        $unwind: {
+            path: '$shop',
+            preserveNullAndEmptyArrays: true
         }
     },
     {
