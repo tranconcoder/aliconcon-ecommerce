@@ -45,4 +45,11 @@ reviewRoute.get(
     catchError(reviewController.getReviewsByShop)
 );
 
+/* ------------------ Get reviews by shop ID (Public) ------------------ */
+reviewRoute.get(
+    "/shop/:shopId",
+    validateParamsId("shopId"),
+    catchError(reviewController.getReviewsByShopId)
+);
+
 export default reviewRoute;

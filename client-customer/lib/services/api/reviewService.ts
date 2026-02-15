@@ -94,6 +94,34 @@ class ReviewService {
         const response = await apiClient.get<GetReviewsBySkuResponse>(`/review/sku/${skuId}/all`);
         return response.data;
     }
+
+    /**
+     * Get reviews by Shop ID
+     */
+    async getReviewsByShopId(shopId: string, params?: {
+        page?: number;
+        limit?: number;
+        rating?: number;
+        sortBy?: string;
+        sortType?: string;
+    }): Promise<GetReviewsByShopResponse> {
+        const response = await apiClient.get<GetReviewsByShopResponse>(`/review/shop/${shopId}`, { params });
+        return response.data;
+    }
+}
+
+export interface GetReviewsByShopResponse {
+    message: string;
+    metadata: {
+        reviews: Review[];
+        pagination: {
+            currentPage: number;
+            totalPages: number;
+            totalReviews: number;
+            limit: number;
+        };
+        statistics: ReviewStatistics;
+    };
 }
 
 const reviewService = new ReviewService();

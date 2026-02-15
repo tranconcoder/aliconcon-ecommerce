@@ -80,4 +80,31 @@ export default new class ReviewController {
             metadata: await reviewService.getReviewsByShopId(shop._id.toString(), options)
         }).send(res);
     }
+
+    /* ---------------------------------------------------------- */
+    /*           Get reviews by shop ID (Public)                  */
+    /* ---------------------------------------------------------- */
+    getReviewsByShopId: RequestWithParams<{ shopId: string }> & RequestWithQuery<{
+        page?: string;
+        limit?: string;
+        rating?: string;
+        sortBy?: string;
+        sortType?: string;
+    }> = async (req, res, _next) => {
+        const { shopId } = req.params;
+
+        // Parse query parameters
+        const options = {
+            page: req.query.page ? parseInt(req.query.page as string) : 1,
+            limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
+            rating: req.query.rating ? parseInt(req.query.rating as string) : undefined,
+            sortBy: (req.query.sortBy as 'createdAt' | 'review_rating') || 'createdAt',
+            sortType: (req.query.sortType as 'asc' | 'desc') || 'desc'
+        };
+
+        new OkResponse({
+            message: 'Shop reviews fetched successfully',
+            metadata: await reviewService.getReviewsByShopId(shopId, options)
+        }).send(res);
+    }
 }

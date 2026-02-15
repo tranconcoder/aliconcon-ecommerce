@@ -34,6 +34,7 @@ import { CustomImage } from '@/components/ui/CustomImage';
 import { cn } from '@/lib/utils';
 import { useAppSelector } from '@/lib/store/hooks';
 import { useToast } from '@/hooks/use-toast';
+import ShopReviews from '@/components/shop/ShopReviews';
 
 const ShopProfilePage = () => {
     const params = useParams();
@@ -553,6 +554,11 @@ const ShopProfilePage = () => {
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* Shop Reviews Section */}
+                    <div className="mt-12">
+                         <ShopReviews shopId={shopId} />
                     </div>
                 </div>
             </div>
