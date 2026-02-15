@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
 import shopModel from '@/models/shop.model.js';
 import mediaModel from '@/models/media.model.js';
 import { locationModel, districtModel, provinceModel, wardModel } from '@/models/location.model.js';
-import { SHOP_INIT_BASE_PATH } from '@/configs/media.config.js';
+import { SHOP_INIT_BASE_PATH, SHOP_BASE_PATH } from '@/configs/media.config.js';
 import { MediaMimeTypes, MediaTypes } from '@/enums/media.enum.js';
 import { seederDataManager } from './data/index.js';
 import type { IShopData } from './data/shop.data.js';
@@ -20,7 +20,7 @@ import { Seeder } from './seeder.js';
 /* ---------------------------------------------------------- */
 
 /** Directory where shop logos will be served from at runtime */
-const SHOP_LOGO_PUBLIC = path.join(import.meta.dirname, '../../../public/shops');
+// SHOP_LOGO_PUBLIC replaced by SHOP_BASE_PATH imported from config
 
 /* ---------------------------------------------------------- */
 /*                        Shop Seeder                         */
@@ -74,7 +74,7 @@ class ShopSeeder extends Seeder {
      */
     protected async seed(): Promise<void> {
         // Ensure public directory exists
-        fs.mkdirSync(SHOP_LOGO_PUBLIC, { recursive: true });
+        fs.mkdirSync(SHOP_BASE_PATH, { recursive: true });
 
         for (const s of this.shops) {
             // --- Step 1: Seed shop logo media ---
@@ -125,7 +125,7 @@ class ShopSeeder extends Seeder {
         if (!shop.shop_logo) return undefined;
 
         const srcPath = path.join(SHOP_INIT_BASE_PATH, shop.shop_logo);
-        const destPath = path.join(SHOP_LOGO_PUBLIC, shop.shop_logo);
+        const destPath = path.join(SHOP_BASE_PATH, shop.shop_logo);
 
         // Copy image file to public directory
         if (fs.existsSync(srcPath)) {
@@ -150,7 +150,7 @@ class ShopSeeder extends Seeder {
             {
                 media_title: `${shop.shop_name} Logo`,
                 media_fileName: shop.shop_logo,
-                media_filePath: `${SHOP_LOGO_PUBLIC}/${shop.shop_logo}`,
+                media_filePath: `${SHOP_BASE_PATH}/${shop.shop_logo}`,
                 media_fileType: MediaTypes.IMAGE,
                 media_fileSize: fileSize,
                 media_mimeType: mimeType,

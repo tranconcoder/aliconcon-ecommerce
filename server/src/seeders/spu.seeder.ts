@@ -9,10 +9,12 @@ import mediaModel from '@/models/media.model.js';
 import mongoose from 'mongoose';
 import { ShopStatus } from '@/enums/shop.enum.js';
 import { MediaTypes, MediaMimeTypes } from '@/enums/media.enum.js';
-import { SPU_BASE_PATH } from '@/configs/media.config.js';
+import { SPU_BASE_PATH, SPU_INIT_BASE_PATH } from '@/configs/media.config.js';
 import { seederDataManager } from './data/index.js';
 import type { ISPUData } from './data/spu.data.js';
 import { Seeder } from './seeder.js';
+import fs from 'fs';
+import path from 'path';
 
 /* ---------------------------------------------------------- */
 /*                         Constants                          */
@@ -77,9 +79,18 @@ class SPUSeeder extends Seeder {
             });
             p.contextImages.forEach(img => allImages.add(img));
 
+            // Ensure public directory exists
+            fs.mkdirSync(SPU_BASE_PATH, { recursive: true });
+
             // Step 2: Ensure all identified images exist in the media collection
             const mediaMap = new Map<string, any>();
             for (const imgName of allImages) {
+                const srcPath = path.join(SPU_INIT_BASE_PATH, imgName);
+                const destPath = path.join(SPU_BASE_PATH, imgName);
+                if (fs.existsSync(srcPath)) {
+                    fs.copyFileSync(srcPath, destPath);
+                }
+                
                 let media = await mediaModel.findOne({ media_fileName: imgName });
                 if (!media) {
                     media = await mediaModel.create({

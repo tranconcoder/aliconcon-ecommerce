@@ -6,11 +6,13 @@
 import mongoose from 'mongoose';
 import { seederDataManager } from './data/index.js';
 import type { ICategoryData } from './data/category.data.js';
-import { CATEGORY_BASE_PATH } from '@/configs/media.config.js';
+import { CATEGORY_BASE_PATH, CATEGORY_INIT_BASE_PATH } from '@/configs/media.config.js';
 import { MediaMimeTypes, MediaTypes } from '@/enums/media.enum.js';
 import mediaModel from '@/models/media.model.js';
 import categoryModel from '@/models/category.model.js';
 import { Seeder } from './seeder.js';
+import fs from 'fs';
+import path from 'path';
 
 /* ---------------------------------------------------------- */
 /*                         Constants                          */
@@ -73,6 +75,9 @@ class CategorySeeder extends Seeder {
         // Clear existing data to ensure fresh seeding and avoid immutable ID errors
         await categoryModel.deleteMany({});
         
+        // Ensure public directory exists
+        fs.mkdirSync(CATEGORY_BASE_PATH, { recursive: true });
+
         // Safely clear only category icon media by filename
         const categoryIconNames = this.seedData.map(item => item.category_icon);
         await mediaModel.deleteMany({ media_fileName: { $in: categoryIconNames } });
@@ -91,6 +96,11 @@ class CategorySeeder extends Seeder {
                 media_title: item.category_name,
                 media_fileName: item.category_icon,
                 get media_filePath() {
+                    const srcPath = path.join(CATEGORY_INIT_BASE_PATH, item.category_icon);
+                    const destPath = path.join(CATEGORY_BASE_PATH, item.category_icon);
+                    if (fs.existsSync(srcPath)) {
+                        fs.copyFileSync(srcPath, destPath);
+                    }
                     return `${CATEGORY_BASE_PATH}/${this.media_fileName}`;
                 },
                 media_fileType: MediaTypes.IMAGE,
