@@ -1,3 +1,6 @@
 [submodule "server"]
 	path = server
 	url = git@github.com:tranconcoder/aliconcon-ecommerce-api.git
+[submodule "client-customer"]
+	path = client-customer
+	url = git@github.com:tranconcoder/aliconcon-ecommerce-customer.git
