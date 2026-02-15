@@ -4,3 +4,9 @@
 [submodule "client-customer"]
 	path = client-customer
 	url = git@github.com:tranconcoder/aliconcon-ecommerce-customer.git
+[submodule "mcp"]
+	path = mcp
+	url = git@github.com:tranconcoder/aliconcon-ecommerce-mcp.git
+[submodule "client-shop"]
+	path = client-shop
+	url = git@github.com:tranconcoder/aliconcon-ecommerce-shop.git
