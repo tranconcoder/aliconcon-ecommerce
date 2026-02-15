@@ -379,7 +379,20 @@ export default class AuthService {
         });
         if (!newKeyToken) throw new ForbiddenErrorResponse({ message: 'Save key token failed!' });
 
-        return newJwtTokenPair;
+        const result: commonTypes.object.ObjectAnyKeys = {
+            token: newJwtTokenPair,
+            user: _.pick(user, USER_PUBLIC_FIELDS)
+        };
+
+        /* --------------------- Add role data  --------------------- */
+        const roleData = await roleService.getUserRoleData({
+            userId: user._id.toString(),
+            roleId: user.user_role.toString()
+        });
+        if (roleData && roleData.role_name !== RoleNames.USER)
+            result[roleData.role_name] = roleData.role_data || true;
+
+        return result;
     };
     /* ------------------------------------------------------ */
     /*                  Upsert user from Google               */

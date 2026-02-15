@@ -1,6 +1,7 @@
 import ErrorResponse, {
     ForbiddenErrorResponse,
-    NotFoundErrorResponse
+    NotFoundErrorResponse,
+    UnauthorizedErrorResponse
 } from '@/response/error.response.js';
 import catchError from './catchError.middleware.js';
 import JwtService from '@/services/jwt.service.js';
@@ -13,21 +14,21 @@ export const authenticate = catchError(async (req, _, next) => {
     const authHeader = req.headers.authorization;
     const accessToken = authHeader && authHeader.split(' ').at(1);
     if (!accessToken)
-        throw new ForbiddenErrorResponse({
+        throw new UnauthorizedErrorResponse({
             message: 'Token not found!'
         });
 
     /* --------------- Parse token payload -------------- */
     const payloadParsed = JwtService.parseJwtPayload(accessToken);
     if (!payloadParsed)
-        throw new ForbiddenErrorResponse({
+        throw new UnauthorizedErrorResponse({
             message: 'Invalid token payload!'
         });
 
     /* ------------ Check key token is valid ------------- */
     const keyToken = await KeyTokenService.findTokenByUserId(payloadParsed.id);
     if (!keyToken)
-        throw new ForbiddenErrorResponse({
+        throw new UnauthorizedErrorResponse({
             message: 'Invalid token!'
         });
 
@@ -37,7 +38,7 @@ export const authenticate = catchError(async (req, _, next) => {
         publicKey: keyToken.public_key
     });
     if (!payload)
-        throw new ForbiddenErrorResponse({
+        throw new UnauthorizedErrorResponse({
             message: 'Token is expired or invalid!'
         });
 

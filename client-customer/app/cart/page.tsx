@@ -39,7 +39,7 @@ import {
     updateItemStatus
 } from '@/lib/store/slices/cartSlice';
 import { fetchUserAddresses } from '@/lib/store/slices/addressSlice';
-import checkoutService, { CheckoutRequest, ShopDiscount } from '@/lib/services/api/checkoutService';
+import checkoutService, { CheckoutRequest, ShopDiscount, CheckoutResponse } from '@/lib/services/api/checkoutService';
 import orderService, { CreateOrderRequest } from '@/lib/services/api/orderService';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -73,6 +73,7 @@ export default function CartPage() {
     // State cho checkout và order
     const [isCheckingOut, setIsCheckingOut] = useState(false);
     const [isOrdering, setIsOrdering] = useState(false);
+    const [checkoutData, setCheckoutData] = useState<CheckoutResponse | null>(null);
 
     // Fetch addresses when component mounts
     useEffect(() => {
@@ -95,6 +96,11 @@ export default function CartPage() {
             .map((item) => item.sku_id);
         setActiveItems(activeItemIds);
     }, [cartItems]);
+
+    // Reset checkout data when items or active items change to avoid showing stale data
+    useEffect(() => {
+        setCheckoutData(null);
+    }, [cartItems, activeItems]);
 
     const calculateSubtotal = () => {
         return cartItems
@@ -291,6 +297,69 @@ export default function CartPage() {
     // Kiểm tra xem tất cả sản phẩm có được chọn không
     const isAllActive = cartItems.length > 0 && activeItems.length === cartItems.length;
 
+    // Handle applying discounts and calculating checkout
+    const handleApplyDiscounts = async () => {
+        if (!selectedAddressId) {
+            toast({
+                title: 'Lỗi',
+                description: 'Vui lòng chọn địa chỉ giao hàng để tính toán mã giảm giá',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        if (activeItems.length === 0) {
+            toast({
+                title: 'Thông báo',
+                description: 'Vui lòng chọn sản phẩm để tính toán mã giảm giá',
+                variant: 'default'
+            });
+            return;
+        }
+
+        setIsCheckingOut(true);
+        try {
+            const shopsDiscount: ShopDiscount[] = [];
+            const activeShops = new Set(
+                cartItems
+                    .filter((item) => activeItems.includes(item.sku_id))
+                    .map((item) => item.shop_id)
+            );
+
+            activeShops.forEach((shopId) => {
+                const shopDiscountCode = shopDiscountCodes[shopId];
+                shopsDiscount.push({
+                    shopId,
+                    discountCode: shopDiscountCode || ''
+                });
+            });
+
+            const checkoutRequest: CheckoutRequest = {
+                addressId: selectedAddressId,
+                shopsDiscount,
+                discountCode: adminDiscountCode || undefined
+            };
+
+            const response = await checkoutService.checkout(checkoutRequest);
+            setCheckoutData(response);
+
+            toast({
+                title: 'Đã áp dụng',
+                description: 'Thông tin giảm giá đã được cập nhật',
+                variant: 'default'
+            });
+        } catch (error: any) {
+            console.error('Apply discounts error:', error);
+            toast({
+                title: 'Lỗi',
+                description: error.response?.data?.message || 'Không thể áp dụng mã giảm giá',
+                variant: 'destructive'
+            });
+        } finally {
+            setIsCheckingOut(false);
+        }
+    };
+
     // Handle checkout
     const handleCheckout = async () => {
         if (!selectedAddressId) {
@@ -363,7 +432,7 @@ export default function CartPage() {
     };
 
     // Handle order creation
-    const handleCreateOrder = async (paymentType: 'cod' | 'vnpay' | 'bank_transfer' = 'cod') => {
+    const handleCreateOrder = async (paymentType: 'cod' | 'vnpay' = 'cod') => {
         setIsOrdering(true);
         try {
             const orderRequest: CreateOrderRequest = {
@@ -552,15 +621,7 @@ export default function CartPage() {
                                             size="sm"
                                             variant="outline"
                                             className="bg-orange-600 text-white hover:bg-orange-700 border-orange-600"
-                                            onClick={() => {
-                                                // Validation will happen during checkout
-                                                toast({
-                                                    title: 'Thông báo',
-                                                    description:
-                                                        'Mã giảm giá sẽ được áp dụng khi tính toán đơn hàng',
-                                                    variant: 'default'
-                                                });
-                                            }}
+                                            onClick={handleApplyDiscounts}
                                         >
                                             Lưu mã
                                         </Button>
@@ -588,6 +649,20 @@ export default function CartPage() {
                                         </div>
                                     )}
                                 </div>
+
+                                {checkoutData && checkoutData.metadata.shops_info.find(s => s.shop_id === shopGroup.shopId)?.discount && (
+                                    <div className="mb-4 p-2 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Tag className="h-4 w-4 text-green-600" />
+                                            <span className="text-sm font-semibold text-green-700">
+                                                Đã áp dụng: {checkoutData.metadata.shops_info.find(s => s.shop_id === shopGroup.shopId)?.discount?.discount_name}
+                                            </span>
+                                        </div>
+                                        <span className="text-sm font-bold text-green-600">
+                                            -{checkoutData.metadata.shops_info.find(s => s.shop_id === shopGroup.shopId)?.total_discount_price.toLocaleString('vi-VN')}₫
+                                        </span>
+                                    </div>
+                                )}
 
                                 {shopGroup.items.map((item) => (
                                     <Card
@@ -641,15 +716,42 @@ export default function CartPage() {
                                                         {item.product_name}
                                                     </h3>
                                                 </Link>
-                                                <p
-                                                    className={`text-sm font-bold mt-1 ${
-                                                        activeItems.includes(item.sku_id)
-                                                            ? 'text-blue-600'
-                                                            : 'text-blue-600'
-                                                    }`}
-                                                >
-                                                    {item.sku_price.toLocaleString('vi-VN')}₫
-                                                </p>
+                                                <div className="mt-1">
+                                                    {(() => {
+                                                        const shopInfo = checkoutData?.metadata.shops_info.find(
+                                                            (s) => s.shop_id === item.shop_id
+                                                        );
+                                                        const productInfo = shopInfo?.products_info.find(
+                                                            (p) => p.id === item.sku_id
+                                                        );
+                                                        if (
+                                                            productInfo &&
+                                                            productInfo.price < productInfo.price_raw
+                                                        ) {
+                                                            return (
+                                                                <div className="flex flex-col">
+                                                                    <span className="line-through text-xs text-gray-400">
+                                                                        {productInfo.price_raw.toLocaleString(
+                                                                            'vi-VN'
+                                                                        )}
+                                                                        ₫
+                                                                    </span>
+                                                                    <span className="text-sm font-bold text-blue-600">
+                                                                        {productInfo.price.toLocaleString(
+                                                                            'vi-VN'
+                                                                        )}
+                                                                        ₫
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return (
+                                                            <p className="text-sm font-bold text-blue-600">
+                                                                {item.sku_price.toLocaleString('vi-VN')}₫
+                                                            </p>
+                                                        );
+                                                    })()}
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-2 my-2 sm:my-0">
                                                 <Button
@@ -714,19 +816,57 @@ export default function CartPage() {
                         <CardContent className="space-y-3 p-0">
                             <div className="flex justify-between text-sm text-gray-700">
                                 <span>Tạm tính ({calculateTotalItems()} sản phẩm đã chọn)</span>
-                                <span className="font-medium">
+                                <span className={checkoutData ? "line-through text-gray-400" : "font-medium"}>
                                     {subtotal.toLocaleString('vi-VN')}₫
                                 </span>
                             </div>
 
+                            {checkoutData && (
+                                <>
+                                    <div className="flex justify-between text-sm text-gray-700">
+                                        <span>Tổng tiền hàng</span>
+                                        <span className="font-medium">
+                                            {checkoutData.metadata.total_price_raw.toLocaleString('vi-VN')}₫
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-gray-700">
+                                        <span>Phí vận chuyển</span>
+                                        <span className="font-medium">
+                                            {checkoutData.metadata.total_fee_ship > 0 
+                                                ? `+${checkoutData.metadata.total_fee_ship.toLocaleString('vi-VN')}₫`
+                                                : 'Miễn phí'}
+                                        </span>
+                                    </div>
+                                    {checkoutData.metadata.total_discount_price > 0 && (
+                                        <div className="flex justify-between text-sm text-green-600 font-medium font-bold">
+                                            <span>Giảm giá tổng cộng</span>
+                                            <span>-{checkoutData.metadata.total_discount_price.toLocaleString('vi-VN')}₫</span>
+                                        </div>
+                                    )}
+                                    {checkoutData.metadata.discount && (
+                                        <div className="flex justify-between text-xs text-purple-600 italic">
+                                            <span>Mã Admin: {checkoutData.metadata.discount.discount_code}</span>
+                                            <span>-{checkoutData.metadata.total_discount_admin_price.toLocaleString('vi-VN')}₫</span>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
                             <div className="border-t pt-3">
                                 <div className="flex justify-between text-lg font-bold text-blue-800">
                                     <span>Tổng cộng</span>
-                                    <span>{subtotal.toLocaleString('vi-VN')}₫</span>
+                                    <span>
+                                        {checkoutData 
+                                            ? checkoutData.metadata.total_checkout.toLocaleString('vi-VN') + '₫'
+                                            : subtotal.toLocaleString('vi-VN') + '₫'
+                                        }
+                                    </span>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    * Giảm giá và phí vận chuyển sẽ được tính khi checkout
-                                </p>
+                                {!checkoutData && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        * Giảm giá và phí vận chuyển sẽ được tính khi áp dụng mã
+                                    </p>
+                                )}
                             </div>
                         </CardContent>
 
@@ -852,15 +992,7 @@ export default function CartPage() {
                                         size="sm"
                                         variant="outline"
                                         className="bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
-                                        onClick={() => {
-                                            // Validation will happen during checkout
-                                            toast({
-                                                title: 'Thông báo',
-                                                description:
-                                                    'Mã giảm giá sẽ được áp dụng khi tính toán đơn hàng',
-                                                variant: 'default'
-                                            });
-                                        }}
+                                        onClick={handleApplyDiscounts}
                                     >
                                         Lưu mã
                                     </Button>

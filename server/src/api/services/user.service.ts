@@ -30,6 +30,8 @@ export default class UserService {
                 'user_dayOfBirth'
             ]
         });
+        if (!user) throw new NotFoundErrorResponse({ message: 'User not found!' });
+
         const result: commonTypes.object.ObjectAnyKeys = { user };
 
         /* --------------------- Add role data  --------------------- */

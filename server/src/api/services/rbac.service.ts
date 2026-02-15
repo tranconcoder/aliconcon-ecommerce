@@ -47,7 +47,7 @@ class RoleService {
         const roleName: RoleNames = await findRoleById({
             id: roleId,
             options: { lean: true }
-        }).then((role) => role.role_name);
+        }).then((role) => role?.role_name);
 
         if (!roleName) return null;
         if (!roleHandleGetDataStrategy[roleName]) return null;

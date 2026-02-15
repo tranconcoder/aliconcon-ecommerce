@@ -102,7 +102,7 @@ export default function StoreProvider({ children }: StoreProviderProps) {
                         console.log('StoreProvider: Unauthorized. Attempting token refresh.');
                         try {
                             const refreshResponse = await axiosClient.post<RefreshTokenApiResponse>(
-                                '/auth/refresh',
+                                '/auth/new-token',
                                 { refreshToken: currentRefreshToken }
                             );
                             const newTokens = refreshResponse.data.metadata.token;

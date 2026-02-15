@@ -36,9 +36,9 @@ class UserData extends SeederDataRow<IUserData> {
 
     protected rawData = [
         // _id                      | user_fullName | user_email          | password      | role_name      | user_status | user_avatar | user_date_of_birth | user_sex | phoneNumber  | user_address     | is_email_verified | is_phone_verified
-        ['000000000000000000000001', 'Shop Owner',   'shop@example.com',   '123456789aA@', RoleNames.SHOP,  'active',    '',          '1990-01-01',        true,     '0123456789', '123 Shop St',    true,              true],
+        ['000000000000000000000001', 'Shop Owner',   'shop@example.com',   '123456789aA@', RoleNames.SHOP,  'active',    '',          '1990-01-01',        true,     '0912345678', '123 Shop St',    true,              true],
         ['000000000000000000000002', 'Client User',  'client@example.com', '123456789aA@', RoleNames.USER,  'active',    '',          '1995-05-05',        false,    '0987654321', '456 Client Rd',  true,              true],
-        ['000000000000000000000003', 'System Admin', 'admin@example.com',  '123456789aA@', RoleNames.ADMIN, 'active',    '',          '1985-12-12',        true,     '0112233445', '789 Admin Blvd', true,              true]
+        ['000000000000000000000003', 'System Admin', 'admin@example.com',  '123456789aA@', RoleNames.ADMIN, 'active',    '',          '1985-12-12',        true,     '0312233445', '789 Admin Blvd', true,              true]
     ];
 
     constructor() {

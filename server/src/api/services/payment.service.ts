@@ -1,6 +1,5 @@
-import crypto from 'crypto';
-import querystring from 'qs';
-import { BadRequestErrorResponse, NotFoundErrorResponse } from '@/response/error.response.js';
+import { BadRequestErrorResponse, NotFoundErrorResponse, UnauthorizedErrorResponse } from '@/response/error.response.js';
+import vnpayUtil from '../utils/vnpay.util.js';
 import orderModel from '@/models/order.model.js';
 import { OrderStatus } from '@/enums/order.enum.js';
 import paymentModel from '@/models/payment.model.js';
@@ -29,120 +28,28 @@ import {
     VNPAY_API_URL
 } from '@/configs/payment.config.js';
 
-export default new (class PaymentService {
+export class PaymentService {
     private static vnpay = new VNPay({
         tmnCode: VNPAY_TMN_CODE,
         secureSecret: VNPAY_HASH_SECRET,
         vnpayHost: VNPAY_URL,
         queryDrAndRefundHost: VNPAY_API_URL,
-
-        testMode: true, // tùy chọn, ghi đè vnpayHost thành sandbox nếu là true
-        hashAlgorithm: 'SHA512' as any, // tùy chọn - fix type issue
-
-        /**
-         * Bật/tắt ghi log
-         * Nếu enableLog là false, loggerFn sẽ không được sử dụng trong bất kỳ phương thức nào
-         */
-        enableLog: false, // tùy chọn
-
-        /**
-         * Hàm `loggerFn` sẽ được gọi để ghi log khi enableLog là true
-         * Mặc định, loggerFn sẽ ghi log ra console
-         * Bạn có thể cung cấp một hàm khác nếu muốn ghi log vào nơi khác
-         *
-         * `ignoreLogger` là một hàm không làm gì cả
-         */
-        loggerFn: ignoreLogger, // tùy chọn
-
-        /**
-         * Tùy chỉnh các đường dẫn API của VNPay
-         * Thường không cần thay đổi trừ khi:
-         * - VNPay cập nhật đường dẫn của họ
-         * - Có sự khác biệt giữa môi trường sandbox và production
-         */
+        testMode: true,
+        hashAlgorithm: 'SHA512' as any,
+        enableLog: false,
+        loggerFn: ignoreLogger,
         endpoints: {
             paymentEndpoint: 'paymentv2/vpcpay.html',
             queryDrRefundEndpoint: 'merchant_webapi/api/transaction',
             getBankListEndpoint: 'qrpayauth/api/merchant/get_bank_list',
-        }, // tùy chọn
+        },
     });
 
-    /**
-     * @description Sorts an object's keys alphabetically and filters out empty/null values.
-     * @param {any} obj - The object to sort.
-     * @returns {any} A new object with sorted keys.
-     * @private
-     */
-    private sortParams(obj: any) {
-        const sortedObj: any = Object.entries(obj)
-            .filter(
-                ([key, value]) => value !== "" && value !== undefined && value !== null
-            )
-            .sort(([key1], [key2]) => key1.toString().localeCompare(key2.toString()))
-            .reduce((acc: any, [key, value]) => {
-                acc[key] = value;
-                return acc;
-            }, {});
+    /* -------------------------------------------------------------------------- */
+    /*                               PAYMENT METHODS                              */
+    /* -------------------------------------------------------------------------- */
 
-        return sortedObj;
-    }
-
-    /**
-     * @description Creates a HMAC-SHA512 signature for VNPay requests.
-     * @param {any} params - The parameters to sign.
-     * @param {string} hashSecret - The secret key used for signing.
-     * @returns {string} The hex-encoded signature.
-     * @private
-     */
-    private createVNPaySignature(params: any, hashSecret: string): string {
-        // Remove secure hash fields if they exist
-        const paramsToSign = { ...params };
-        delete paramsToSign['vnp_SecureHash'];
-        delete paramsToSign['vnp_SecureHashType'];
-
-        // Sort parameters alphabetically using the working sortParams method
-        const sortedParams = this.sortParams(paramsToSign);
-
-        // Create query string using URLSearchParams (like in working code)
-        const urlParams = new URLSearchParams();
-        for (let [key, value] of Object.entries(sortedParams)) {
-            urlParams.append(key, String(value));
-        }
-
-        const querystring = urlParams.toString();
-        console.log('Data to sign:', querystring);
-
-        // Create HMAC-SHA512 signature (exactly like working code)
-        const hmac = crypto.createHmac('sha512', hashSecret);
-        const signature = hmac.update(querystring).digest('hex');
-
-        console.log('Generated signature:', signature);
-
-        return signature;
-    }
-
-
-    /**
-     * @description Formats amount to VNPay standard (rounds to nearest integer).
-     * @param {number} amount - The amount to format.
-     * @returns {number} The formatted amount.
-     * @throws {BadRequestErrorResponse} If amount is invalid.
-     * @private
-     */
-    private formatVNPayAmount(amount: number): number {
-        // VNPay requires amount in smallest currency unit (VND cents)
-        // Convert to integer and ensure no decimal places
-        const vnpAmount = Math.round(amount);
-
-        // Additional validation
-        if (isNaN(vnpAmount) || vnpAmount <= 0) {
-            throw new BadRequestErrorResponse({ message: 'Invalid payment amount' });
-        }
-
-        console.log(`Amount conversion: ${amount} VND -> ${vnpAmount} (VNPay format)`);
-        return vnpAmount;
-    }
-
+    /* ------------------- Method Divider ------------------- */
     /**
      * @description Generates a VNPay payment URL for a given order.
      * @param {Object} params - The payment details.
@@ -202,7 +109,7 @@ export default new (class PaymentService {
         tomorrow.setDate(tomorrow.getDate() + 1);
 
         const paymentUrl = PaymentService.vnpay.buildPaymentUrl({
-            vnp_Amount: this.formatVNPayAmount(amount),
+            vnp_Amount: vnpayUtil.formatVNPayAmount(amount),
             vnp_IpAddr: ipAddr,
             vnp_TxnRef: txnRef,
             vnp_OrderInfo: orderInfo,
@@ -218,7 +125,7 @@ export default new (class PaymentService {
         payment.payment_url = paymentUrl;
         payment.vnpay_data = {
             vnp_TxnRef: txnRef,
-            vnp_Amount: this.formatVNPayAmount(amount),
+            vnp_Amount: vnpayUtil.formatVNPayAmount(amount),
             vnp_OrderInfo: orderInfo,
             vnp_CreateDate: dateFormat(new Date()).toString()
         };
@@ -230,6 +137,7 @@ export default new (class PaymentService {
         };
     }
 
+    /* ------------------- Method Divider ------------------- */
     /**
      * @description Processes the data returned from VNPay after payment attempt.
      * @param {any} vnpParams - Parameters received from VNPay redirect.
@@ -252,7 +160,7 @@ export default new (class PaymentService {
         });
 
         // Verify signature using the same method
-        const expectedSignature = this.createVNPaySignature(vnpParams, VNPAY_HASH_SECRET);
+        const expectedSignature = vnpayUtil.generateVNPaySignature(vnpParams, VNPAY_HASH_SECRET);
 
         console.log('🔐 Signature verification:', {
             expected: expectedSignature,
@@ -430,6 +338,7 @@ export default new (class PaymentService {
         }
     }
 
+    /* ------------------- Method Divider ------------------- */
     /**
      * @description Handles Instant Payment Notification (IPN) from VNPay.
      * @param {any} vnpParams - Raw IPN parameters.
@@ -507,6 +416,7 @@ export default new (class PaymentService {
         }
     }
 
+    /* ------------------- Method Divider ------------------- */
     /**
      * @description Retrieves a payment record by its transaction reference.
      * @param {string} txnRef - The transaction reference (payment ID).
@@ -521,6 +431,7 @@ export default new (class PaymentService {
         return payment;
     }
 
+    /* ------------------- Method Divider ------------------- */
     /**
      * @description Retrieves list of payments associated with an order ID.
      * @param {string} orderId - The target order ID.
@@ -538,6 +449,7 @@ export default new (class PaymentService {
         return payment ? [payment] : [];
     }
 
+    /* ------------------- Method Divider ------------------- */
     /**
      * @description Manually updates a payment status once it's confirmed outside the standard loop.
      * @param {string} paymentId - The specific payment ID.
@@ -612,8 +524,11 @@ export default new (class PaymentService {
         return payment;
     }
 
-    // ==================== REFUND METHODS ====================
+    /* -------------------------------------------------------------------------- */
+    /*                               REFUND METHODS                               */
+    /* -------------------------------------------------------------------------- */
 
+    /* ------------------- Method Divider ------------------- */
     /**
      * @description Initiates a refund process for a payment.
      * @param {Object} params - Refund parameters.
@@ -862,7 +777,6 @@ export default new (class PaymentService {
         }
 
         // Check if we're in sandbox/test mode
-        // const isTestMode = VNPAY_URL.includes('sandbox') || process.env.NODE_ENV !== 'production';
         const isTestMode = false;
         console.log('🔧 Environment check:', {
             isTestMode,
@@ -926,7 +840,7 @@ export default new (class PaymentService {
             console.log('🚨 IMPORTANT: This is where the actual VNPay refund API should be called!');
 
             const vnpayRefundRequest = {
-                vnp_Amount: this.formatVNPayAmount(amount), // Convert to VNPay format
+                vnp_Amount: vnpayUtil.formatVNPayAmount(amount), // Convert to VNPay format
                 vnp_CreateBy: 'system', // System user creating the refund
                 vnp_CreateDate: refundRequestDate, // Keep as string for VNPay API
                 vnp_IpAddr: '127.0.0.1', // Server IP
@@ -941,7 +855,7 @@ export default new (class PaymentService {
 
             console.log('📋 VNPay refund request prepared:', vnpayRefundRequest);
             console.log('📋 VNPay refund parameters:', {
-                amount: `${amount} VND -> ${this.formatVNPayAmount(amount)} (VNPay format)`,
+                amount: `${amount} VND -> ${vnpayUtil.formatVNPayAmount(amount)} (VNPay format)`,
                 createDate: refundRequestDate,
                 transactionDate: originalTransactionDate,
                 transactionType: transactionType,
@@ -1048,6 +962,7 @@ export default new (class PaymentService {
             });
         }
     }
+}
 
-    // ==================== END REFUND METHODS ====================
-})(); 
+const paymentService = new PaymentService();
+export default paymentService;
