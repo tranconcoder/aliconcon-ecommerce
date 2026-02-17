@@ -31,7 +31,7 @@ deploy_prod:
 
     # Setup SSH agent for submodules (if they are private/SSH)
     - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "$SSH_PRIVATE_KEY" | base64 -d | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - ssh-keyscan gitlab.trancondev.site >> ~/.ssh/known_hosts
