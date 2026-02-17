@@ -1,0 +1,58 @@
+stages:
+  - sync
+  - deploy
+
+# Stage 1: Sync to GitHub (HTTPS)
+sync_to_github:
+  stage: sync
+  image:
+    name: alpine/git
+    entrypoint: [""]
+  variables:
+    GIT_STRATEGY: clone
+  before_script:
+    - git config --global user.email "ci@gitlab.com"
+    - git config --global user.name "GitLab CI/CD"
+  script:
+    # Use GITHUB_USERNAME and GITHUB_TOKEN variables
+    - git remote add github https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/${GITHUB_REPO}.git
+    - git push github HEAD:refs/heads/${CI_COMMIT_BRANCH} --force
+
+# Stage 2: Deploy to VPS (Docker Socket)
+deploy_prod:
+  stage: deploy
+  image: docker:latest
+  variables:
+    DOCKER_HOST: unix:///var/run/docker.sock   # Use VPS Docker Daemon
+    DEPLOY_PATH: "/opt/apps/$CI_PROJECT_NAME"
+  before_script:
+    # Install rsync, git, ssh (for submodules)
+    - apk add --no-cache rsync git openssh-client
+
+    # Setup SSH agent for submodules (if they are private/SSH)
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan gitlab.trancondev.site >> ~/.ssh/known_hosts
+
+  script:
+    # 1. Update Submodules
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
+
+    # 2. Prepare Directory
+    - mkdir -p $DEPLOY_PATH
+
+    # 3. Sync Files (Exclude .git to save space, but include submodules content)
+    - rsync -av --delete --exclude '.git' ./ $DEPLOY_PATH/
+
+    # 4. Deploy
+    - cd $DEPLOY_PATH
+    # Using docker-compose.yml (default) since docker-compose.prod.yml was not found
+    # Add -f docker-compose.prod.yml if you create that file later
+    - docker compose down --remove-orphans || true
+    - docker compose up -d --build
+
+  only:
+    - master

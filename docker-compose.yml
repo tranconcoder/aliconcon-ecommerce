@@ -4,7 +4,7 @@ services:
       context: ./server
     container_name: aliconcon-ecommerce-server
     ports:
-      - "4000:4000"
+      - "127.0.0.1:3002:3002"
     volumes:
       - ./server:/app
       - /app/node_modules
