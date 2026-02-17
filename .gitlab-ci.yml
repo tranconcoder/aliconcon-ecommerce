@@ -5,6 +5,7 @@ stages:
 # Stage 1: Sync to GitHub (HTTPS)
 sync_to_github:
   stage: sync
+  needs: []
   image:
     name: alpine/git
     entrypoint: [""]
@@ -22,6 +23,7 @@ sync_to_github:
 deploy_prod:
   stage: deploy
   image: docker:latest
+  needs: []
   variables:
     DOCKER_HOST: unix:///var/run/docker.sock   # Use VPS Docker Daemon
     DEPLOY_PATH: "/opt/apps/$CI_PROJECT_NAME"
