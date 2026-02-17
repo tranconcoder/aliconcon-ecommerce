@@ -1,15 +1,15 @@
 [submodule "server"]
 	path = server
-	url = git@github.com:tranconcoder/aliconcon-ecommerce-api.git
+	url = git@gitlab.trancondev.site:tvconss/aliconcon-ecommerce-api.git
 [submodule "client-customer"]
 	path = client-customer
-	url = git@github.com:tranconcoder/aliconcon-ecommerce-customer.git
+	url = git@gitlab.trancondev.site:tvconss/aliconcon-ecommerce-customer.git
 [submodule "mcp"]
 	path = mcp
-	url = git@github.com:tranconcoder/aliconcon-ecommerce-mcp.git
+	url = git@gitlab.trancondev.site:tvconss/aliconcon-ecommerce-mcp.git
 [submodule "client-shop"]
 	path = client-shop
-	url = git@github.com:tranconcoder/aliconcon-ecommerce-shop.git
+	url = git@gitlab.trancondev.site:tvconss/aliconcon-ecommerce-shop.git
 [submodule "client-admin"]
 	path = client-admin
-	url = git@github.com:tranconcoder/aliconcon-ecommerce-admin.git
+	url = git@gitlab.trancondev.site:tvconss/aliconcon-ecommerce-admin.git
