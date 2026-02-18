@@ -18,6 +18,8 @@ sync_to_github:
     # Use GITHUB_USERNAME and GITHUB_TOKEN variables
     - git remote add github https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/${GITHUB_REPO}.git
     - git push github HEAD:refs/heads/${CI_COMMIT_BRANCH} --force
+  tags:
+    - docker
 
 # Stage 2: Deploy to VPS (Docker Socket)
 deploy_prod:
@@ -58,3 +60,6 @@ deploy_prod:
 
   only:
     - master
+
+  tags:
+    - docker
