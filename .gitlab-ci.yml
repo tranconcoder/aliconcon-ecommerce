@@ -1,25 +1,14 @@
+include:
+  - project: tvconss/gitlab-tools
+    ref: main
+    file: sync-to-github/.gitlab-ci.yml
+
 stages:
-  - sync
+  - sync-to-github
   - deploy
 
-# Stage 1: Sync to GitHub (HTTPS)
-sync_to_github:
-  stage: sync
-  needs: []
-  image:
-    name: alpine/git
-    entrypoint: [""]
-  variables:
-    GIT_STRATEGY: clone
-  before_script:
-    - git config --global user.email "ci@gitlab.com"
-    - git config --global user.name "GitLab CI/CD"
-  script:
-    # Use GITHUB_USERNAME and GITHUB_TOKEN variables
-    - git remote add github https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/${GITHUB_REPO}.git
-    - git push github HEAD:refs/heads/${CI_COMMIT_BRANCH} --force
-  tags:
-    - docker
+variables:
+  GITHUB_REPO: "aliconcon-ecommerce"
 
 # Stage 2: Deploy to VPS (Docker Socket)
 deploy_prod:
