@@ -35,14 +35,10 @@ deploy_prod:
     # 2. Create env files from GitLab CI File variables
     - echo "========== STAGE 2 Creating environment files =========="
     - echo "[DEBUG] Creating shared .env file"
-    - set +x  # Disable debug output to avoid exposing env variables
-    - echo "$APP_ENV_FILE" > .env
-    - set -x  # Re-enable debug output
+    - cp "$APP_ENV_FILE" .env
 
     - echo "[DEBUG] Creating server/.env.$NODE_ENV.local"
-    - set +x
-    - echo "$SERVER_ENV_FILE" > server/.env.$NODE_ENV.local
-    - set -x
+    - cp "$SERVER_ENV_FILE" server/.env.$NODE_ENV.local
     - echo "[✓] Environment files created successfully"
 
     - echo "[DEBUG] Setting secure permissions (600)..."
