@@ -19,15 +19,11 @@ deploy_prod:
     DOCKER_HOST: unix:///var/run/docker.sock   # Use VPS Docker Daemon
     DEPLOY_PATH: "/opt/apps/$CI_PROJECT_NAME"
   before_script:
-    # Install rsync, git, ssh (for submodules)
-    - apk add --no-cache rsync git openssh-client
+    # Install rsync, git
+    - apk add --no-cache rsync git
 
-    # Setup SSH agent for submodules (if they are private/SSH)
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | base64 -d | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - ssh-keyscan gitlab.trancondev.site >> ~/.ssh/known_hosts
+    # Setup CI_JOB_TOKEN for submodules access
+    - git config --local url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/".insteadOf "git@gitlab.trancondev.site:"
 
   script:
     # 1. Update Submodules
@@ -42,8 +38,7 @@ deploy_prod:
 
     # 4. Deploy
     - cd $DEPLOY_PATH
-    # Using docker-compose.yml (default) since docker-compose.prod.yml was not found
-    # Add -f docker-compose.prod.yml if you create that file later
+
     - docker compose down --remove-orphans || true
     - docker compose up -d --build
 
