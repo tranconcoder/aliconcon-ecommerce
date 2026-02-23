@@ -22,13 +22,10 @@ deploy_prod:
     # Install rsync, git
     - apk add --no-cache rsync git
 
-    # Setup CI_JOB_TOKEN for submodules access
-    - git config --local url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/".insteadOf "git@gitlab.trancondev.site:"
-
   script:
-    # 1. Update Submodules
-    - git submodule sync --recursive
-    - git submodule update --init --recursive
+    # 1. Clone server repository
+    - rm -rf server
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-api.git server
 
     # 2. Prepare Directory
     - mkdir -p $DEPLOY_PATH
