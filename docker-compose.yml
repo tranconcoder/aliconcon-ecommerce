@@ -9,46 +9,10 @@ services:
       - ./server:/app
       - /app/node_modules
     env_file:
-      - path: ./.env
-        required: false
+      - ./.env
+      - ./server/.env.${NODE_ENV}.local
     environment:
       - NODE_ENV=${NODE_ENV}
-      - HOST=${HOST}
-      - PORT=${PORT}
-      - CLIENT_URL=${CLIENT_URL}
-      - ACCESS_TOKEN_EXPIRED_TIME=${ACCESS_TOKEN_EXPIRED_TIME}
-      - REFRESH_TOKEN_EXPIRED_TIME=${REFRESH_TOKEN_EXPIRED_TIME}
-      
-      # Google mail service
-      - OAUTH2_USER=${OAUTH2_USER}
-      - OAUTH2_ACCESS_TOKEN=${OAUTH2_ACCESS_TOKEN}
-      - OAUTH2_REFRESH_TOKEN=${OAUTH2_REFRESH_TOKEN}
-      - OAUTH2_CLIENT_ID=${OAUTH2_CLIENT_ID}
-      - OAUTH2_CLIENT_SECRET=${OAUTH2_CLIENT_SECRET}
-      - OAUTH2_CALLBACK_URL=${OAUTH2_CALLBACK_URL}
-
-      # VNPay
-      - VNPAY_TMN_CODE=${VNPAY_TMN_CODE}
-      - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
-      - VNPAY_URL=${VNPAY_URL}
-      - VNPAY_RETURN_URL=${VNPAY_RETURN_URL}
-      - VNPAY_IPN_URL=${VNPAY_IPN_URL}
-      - VNPAY_API_URL=${VNPAY_API_URL}
-
-      - MCP_SERVER_PORT=8081
-      - MCP_CLIENT_PORT=8080
-
-      # Redis
-      - REDIS_HOST=redis
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_USER=${REDIS_USER}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-
-      # MongoDB
-      - MONGODB_URL=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DB_NAME}?authSource=admin
-
-      # OpenRouteService
-      - OPEN_ROUTE_SERVICE_API_KEY=${OPEN_ROUTE_SERVICE_API_KEY}
     depends_on:
       - mongodb
       - redis
