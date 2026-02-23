@@ -24,20 +24,52 @@ deploy_prod:
 
   script:
     # 1. Clone server repository
+    - echo "========== STAGE 1 Cloning server repository =========="
     - rm -rf server
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-api.git server
+    - echo "[✓] Server repository cloned successfully"
 
-    # 2. Prepare Directory
+    # 2. Create env files from GitLab CI File variables
+    - echo "========== STAGE 2 Creating environment files =========="
+    - echo "[DEBUG] Copying SERVER_ENV_FILE to server/.env.production.local"
+    - cp "$SERVER_ENV_FILE" server/.env.production.local
+
+    - echo "[DEBUG] Copying MCP_ENV_FILE to mcp/.env.production.local"
+    - cp "$MCP_ENV_FILE" mcp/.env.production.local
+    - echo "[✓] Environment files copied successfully"
+
+    - echo "[DEBUG] Setting secure permissions (600)..."
+    - chmod 600 server/.env.production.local mcp/.env.production.local
+    - chown root:root server/.env.production.local mcp/.env.production.local
+    - echo "[✓] Permissions set to 600, owner root"
+
+    - echo "[DEBUG] Verifying file permissions:"
+    - ls -la server/.env.production.local mcp/.env.production.local
+
+    # 3. Prepare Directory
+    - echo "========== STAGE 3 Preparing deploy directory =========="
     - mkdir -p $DEPLOY_PATH
+    - echo "[✓] Deploy directory created $DEPLOY_PATH"
 
-    # 3. Sync Files (Exclude .git to save space, but include submodules content)
-    - rsync -av --delete --exclude '.git' ./ $DEPLOY_PATH/
+    # 4. Sync Files (All except client-* folders)
+    - echo "========== STAGE 4 Syncing files to deploy path =========="
+    - rsync -av --delete --exclude 'client-*' ./ $DEPLOY_PATH/
+    - echo "[✓] Files synced successfully"
 
-    # 4. Deploy
+    # 5. Deploy
+    - echo "========== STAGE 5 Running Docker Compose =========="
     - cd $DEPLOY_PATH
-
+    - echo "[DEBUG] Verifying environment files in deploy path:"
+    - ls -la server/.env.production.local mcp/.env.production.local || echo "[WARN] Env files not found!"
+    - echo "[DEBUG] Stopping old containers..."
     - docker compose down --remove-orphans || true
+    - echo "[✓] Old containers stopped"
+
+    - echo "[DEBUG] Building and starting new containers..."
     - docker compose up -d --build
+    - echo "[✓] Docker Compose completed"
+
+    - echo "========== DEPLOYMENT FINISHED =========="
 
   only:
     - master
