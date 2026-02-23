@@ -25,26 +25,30 @@ deploy_prod:
   script:
     # 1. Clone server repository
     - echo "========== STAGE 1 Cloning server repository =========="
-    - rm -rf server
+    - rm -rf server mcp
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-api.git server
-    - echo "[✓] Server repository cloned successfully"
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-mcp.git mcp
+    - echo "[✓] Server and MCP repositories cloned successfully"
 
     # 2. Create env files from GitLab CI File variables
     - echo "========== STAGE 2 Creating environment files =========="
     - echo "[DEBUG] Copying SERVER_ENV_FILE to server/.env.production.local"
     - cp "$SERVER_ENV_FILE" server/.env.production.local
 
-    - echo "[DEBUG] Copying MCP_ENV_FILE to mcp/.env.production.local"
-    - cp "$MCP_ENV_FILE" mcp/.env.production.local
+    - echo "[DEBUG] Copying MCP_SERVER_ENV_FILE to mcp/server/.env.production.local"
+    - cp "$MCP_SERVER_ENV_FILE" mcp/server/.env.production.local
+
+    - echo "[DEBUG] Copying MCP_CLIENT_ENV_FILE to mcp/client/.env.production.local"
+    - cp "$MCP_CLIENT_ENV_FILE" mcp/client/.env.production.local
     - echo "[✓] Environment files copied successfully"
 
     - echo "[DEBUG] Setting secure permissions (600)..."
-    - chmod 600 server/.env.production.local mcp/.env.production.local
-    - chown root:root server/.env.production.local mcp/.env.production.local
+    - chmod 600 server/.env.production.local mcp/server/.env.production.local mcp/client/.env.production.local
+    - chown root:root server/.env.production.local mcp/server/.env.production.local mcp/client/.env.production.local
     - echo "[✓] Permissions set to 600, owner root"
 
     - echo "[DEBUG] Verifying file permissions:"
-    - ls -la server/.env.production.local mcp/.env.production.local
+    - ls -la server/.env.production.local mcp/server/.env.production.local mcp/client/.env.production.local
 
     # 3. Prepare Directory
     - echo "========== STAGE 3 Preparing deploy directory =========="
@@ -60,7 +64,7 @@ deploy_prod:
     - echo "========== STAGE 5 Running Docker Compose =========="
     - cd $DEPLOY_PATH
     - echo "[DEBUG] Verifying environment files in deploy path:"
-    - ls -la server/.env.production.local mcp/.env.production.local || echo "[WARN] Env files not found!"
+    - ls -la server/.env.production.local mcp/server/.env.production.local mcp/client/.env.production.local || echo "[WARN] Env files not found!"
     - echo "[DEBUG] Stopping old containers..."
     - docker compose down --remove-orphans || true
     - echo "[✓] Old containers stopped"
