@@ -18,6 +18,8 @@ deploy_prod:
   variables:
     DOCKER_HOST: unix:///var/run/docker.sock   # Use VPS Docker Daemon
     DEPLOY_PATH: "/opt/apps/$CI_PROJECT_NAME"
+    NODE_ENV: production
+  # TEMPORARY: MCP cloning and env setup commented out for server-only testing
   before_script:
     # Install rsync, git
     - apk add --no-cache rsync git
@@ -27,28 +29,31 @@ deploy_prod:
     - echo "========== STAGE 1 Cloning server repository =========="
     - rm -rf server mcp
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-api.git server
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-mcp.git mcp
-    - echo "[✓] Server and MCP repositories cloned successfully"
+    # - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-mcp.git mcp
+    - echo "[✓] Server repository cloned successfully"
 
     # 2. Create env files from GitLab CI File variables
     - echo "========== STAGE 2 Creating environment files =========="
     - echo "[DEBUG] Copying SERVER_ENV_FILE to server/.env.$NODE_ENV.local"
     - cp "$SERVER_ENV_FILE" server/.env.$NODE_ENV.local
 
-    - echo "[DEBUG] Copying MCP_SERVER_ENV_FILE to mcp/server/.env.$NODE_ENV.local"
-    - cp "$MCP_SERVER_ENV_FILE" mcp/server/.env.$NODE_ENV.local
+    # - echo "[DEBUG] Copying MCP_SERVER_ENV_FILE to mcp/server/.env.$NODE_ENV.local"
+    # - cp "$MCP_SERVER_ENV_FILE" mcp/server/.env.$NODE_ENV.local
 
-    - echo "[DEBUG] Copying MCP_CLIENT_ENV_FILE to mcp/client/.env.$NODE_ENV.local"
-    - cp "$MCP_CLIENT_ENV_FILE" mcp/client/.env.$NODE_ENV.local
+    # - echo "[DEBUG] Copying MCP_CLIENT_ENV_FILE to mcp/client/.env.$NODE_ENV.local"
+    # - cp "$MCP_CLIENT_ENV_FILE" mcp/client/.env.$NODE_ENV.local
     - echo "[✓] Environment files copied successfully"
 
     - echo "[DEBUG] Setting secure permissions (600)..."
-    - chmod 600 server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
-    - chown root:root server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
+    - chmod 600 server/.env.$NODE_ENV.local
+    - chown root:root server/.env.$NODE_ENV.local
+    # - chmod 600 server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
+    # - chown root:root server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
     - echo "[✓] Permissions set to 600, owner root"
 
     - echo "[DEBUG] Verifying file permissions:"
-    - ls -la server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
+    - ls -la server/.env.$NODE_ENV.local
+    # - ls -la server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
 
     # 3. Prepare Directory
     - echo "========== STAGE 3 Preparing deploy directory =========="
@@ -64,7 +69,8 @@ deploy_prod:
     - echo "========== STAGE 5 Running Docker Compose =========="
     - cd $DEPLOY_PATH
     - echo "[DEBUG] Verifying environment files in deploy path:"
-    - ls -la server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local || echo "[WARN] Env files not found!"
+    - ls -la server/.env.$NODE_ENV.local
+    # - ls -la server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local || echo "[WARN] Env files not found!"
     - echo "[DEBUG] Stopping old containers..."
     - docker compose down --remove-orphans || true
     - echo "[✓] Old containers stopped"
