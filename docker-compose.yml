@@ -13,7 +13,7 @@ services:
       - ./server/.env.${NODE_ENV}.local
     environment:
       - NODE_ENV=${NODE_ENV}
-      - MONGODB_URL=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/${MONGODB_DB_NAME}
+      - MONGODB_URL=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/${MONGO_DB_NAME}
       - REDIS_URL=redis://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}
     depends_on:
       - mongodb
