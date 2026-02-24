@@ -34,8 +34,6 @@ services:
       - WEBSOCKET_PORT=8080
       - MCP_URL=http://server-mcp:8081
       - REDIS_URL=redis://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}
-      - LLM_MODEL=${LLM_MODEL}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
     depends_on:
       - server-mcp
     networks:
