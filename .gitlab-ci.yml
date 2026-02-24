@@ -39,19 +39,25 @@ deploy_prod:
 
     - echo "[DEBUG] Creating server/.env.$NODE_ENV.local"
     - cp "$SERVER_ENV_FILE" server/.env.$NODE_ENV.local
+
+    - echo "[DEBUG] Creating mcp/server/.env.$NODE_ENV.local"
+    - cp "$MCP_SERVER_ENV_FILE" mcp/server/.env.$NODE_ENV.local
+
+    - echo "[DEBUG] Creating mcp/client/.env.$NODE_ENV.local"
+    - cp "$MCP_CLIENT_ENV_FILE" mcp/client/.env.$NODE_ENV.local
     - echo "[✓] Environment files created successfully"
 
     - echo "[DEBUG] Setting secure permissions (600)..."
-    - chmod 600 .env server/.env.$NODE_ENV.local
-    - chown root:root .env server/.env.$NODE_ENV.local
-    - chmod 600 server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
-    - chown root:root server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
+    - chmod 600 .env server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
+    - chown root:root .env server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
     - echo "[✓] Permissions set to 600, owner root"
 
     - echo "[DEBUG] Verifying file permissions:"
     - test -f .env && echo "[✓] Shared .env file exists" || echo "[❌] Shared .env file not found"
     - test -f server/.env.$NODE_ENV.local && echo "[✓] Server env file exists" || echo "[❌] Server env file not found"
-    - ls -lh .env server/.env.$NODE_ENV.local 2>/dev/null | awk '{print "[✓] Size:", $5, "| Permissions:", $1}'
+    - test -f mcp/server/.env.$NODE_ENV.local && echo "[✓] MCP server env file exists" || echo "[❌] MCP server env file not found"
+    - test -f mcp/client/.env.$NODE_ENV.local && echo "[✓] MCP client env file exists" || echo "[❌] MCP client env file not found"
+    - ls -lh .env server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local 2>/dev/null | awk '{print "[✓] Size:", $5, "| Permissions:", $1}'
 
     # 3. Prepare Directory
     - echo "========== STAGE 3 Preparing deploy directory =========="
@@ -66,6 +72,7 @@ deploy_prod:
     # 5. Deploy
     - echo "========== STAGE 5 Running Docker Compose =========="
     - cd $DEPLOY_PATH
+
     - echo "[DEBUG] Verifying environment files in deploy path:"
     - test -f .env && echo "[✓] Shared .env file exists in deploy path" || echo "[❌] Shared .env not found"
     - test -f server/.env.$NODE_ENV.local && echo "[✓] Server env file exists in deploy path" || echo "[❌] Server env not found"
