@@ -14,6 +14,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - MONGODB_URL=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/${MONGODB_DB_NAME}
+      - REDIS_URL=redis://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}
     depends_on:
       - mongodb
       - redis
@@ -32,6 +33,7 @@ services:
     environment:
       - WEBSOCKET_PORT=8080
       - MCP_SERVER_URL=http://server-mcp:8081
+      - REDIS_URL=redis://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/${REDIS_DB}
     networks:
       - aliconcon-network
 
