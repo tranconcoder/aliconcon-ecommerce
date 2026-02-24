@@ -24,15 +24,13 @@ services:
       context: ./mcp/client
     container_name: aliconcon-ecommerce-client-mcp
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./mcp/client:/app
       - /app/node_modules
     environment:
-      - PORT=8080
       - WEBSOCKET_PORT=8080
-      - MCP_URL=http://server-mcp:8081
-      - USE_WSS=false
+      - MCP_SERVER_URL=http://server-mcp:8081
     networks:
       - aliconcon-network
 
@@ -41,12 +39,14 @@ services:
       context: ./mcp/server
     container_name: aliconcon-ecommerce-server-mcp
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     volumes:
       - ./mcp/server:/app
       - /app/node_modules
     environment:
+      - NODE_ENV=${NODE_ENV}
       - MCP_PORT=8081
+      - API_BASE_URL=http://server:3003
     networks:
       - aliconcon-network
 
