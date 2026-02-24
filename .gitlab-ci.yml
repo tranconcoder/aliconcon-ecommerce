@@ -29,7 +29,7 @@ deploy_prod:
     - echo "========== STAGE 1 Cloning server repository =========="
     - rm -rf server mcp
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-api.git server
-    # - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-mcp.git mcp
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.trancondev.site/tvconss/aliconcon-ecommerce-mcp.git mcp
     - echo "[✓] Server repository cloned successfully"
 
     # 2. Create env files from GitLab CI File variables
@@ -44,8 +44,8 @@ deploy_prod:
     - echo "[DEBUG] Setting secure permissions (600)..."
     - chmod 600 .env server/.env.$NODE_ENV.local
     - chown root:root .env server/.env.$NODE_ENV.local
-    # - chmod 600 server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
-    # - chown root:root server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
+    - chmod 600 server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
+    - chown root:root server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local
     - echo "[✓] Permissions set to 600, owner root"
 
     - echo "[DEBUG] Verifying file permissions:"
@@ -69,7 +69,10 @@ deploy_prod:
     - echo "[DEBUG] Verifying environment files in deploy path:"
     - test -f .env && echo "[✓] Shared .env file exists in deploy path" || echo "[❌] Shared .env not found"
     - test -f server/.env.$NODE_ENV.local && echo "[✓] Server env file exists in deploy path" || echo "[❌] Server env not found"
-    - ls -lh .env server/.env.$NODE_ENV.local 2>/dev/null | awk '{print "[✓] Size:", $5, "| Permissions:", $1}'
+    - test -f mcp/server/.env.$NODE_ENV.local && echo "[✓] MCP server env file exists in deploy path" || echo "[❌] MCP server env not found"
+    - test -f mcp/client/.env.$NODE_ENV.local && echo "[✓] MCP client env file exists in deploy path" || echo "[❌] MCP client env not found"
+    - ls -lh .env server/.env.$NODE_ENV.local mcp/server/.env.$NODE_ENV.local mcp/client/.env.$NODE_ENV.local 2>/dev/null | awk '{print "[✓] Size:", $5, "| Permissions:", $1}'
+
     - echo "[DEBUG] Stopping old containers..."
     - docker compose down --remove-orphans || true
     - echo "[✓] Old containers stopped"
